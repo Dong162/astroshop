@@ -1,0 +1,774 @@
+---
+import MainLayout from "../layouts/MainLayout.astro";
+import { formatCurrency } from "../lib/products";
+import { buildPageTitle } from "../lib/seo";
+
+const title = buildPageTitle("Giỏ hàng");
+const description = "Xem và quản lý giỏ hàng của bạn tại Đông Tạp Hóa.";
+const shippingFee = 25000;
+---
+
+<MainLayout title={title} description={description} noindex>
+  <section class="cart-page" aria-labelledby="cart-heading" data-cart-page data-shipping-fee={shippingFee}>
+
+    <!-- Page header -->
+    <div class="cart-page__header">
+      <a href="/" class="back-link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        Tiếp tục mua sắm
+      </a>
+      <h1 id="cart-heading">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+        Giỏ hàng <span class="cart-count-label" data-cart-heading-count></span>
+      </h1>
+    </div>
+
+    <!-- Empty state -->
+    <div class="cart-empty" data-cart-empty hidden>
+      <div class="cart-empty__icon">🛒</div>
+      <h2>Giỏ hàng đang trống</h2>
+      <p>Hãy quay lại danh sách sản phẩm và thêm món bạn muốn mua.</p>
+      <a href="/#ban-chay" class="btn-cart-primary">Khám phá sản phẩm →</a>
+    </div>
+
+    <!-- Cart layout: items + summary -->
+    <div class="cart-layout" data-cart-layout hidden>
+      <!-- Items column -->
+      <div class="cart-items-col">
+        <div class="cart-items-header">
+          <span>Sản phẩm</span>
+          <span>Số lượng</span>
+          <span>Tạm tính</span>
+        </div>
+        <div class="cart-items" data-cart-items></div>
+      </div>
+
+      <!-- Summary column -->
+      <aside class="cart-summary" aria-label="Tóm tắt đơn hàng">
+        <div class="cart-summary__inner">
+          <h2>Tóm tắt đơn hàng</h2>
+
+          <!-- Trust badges -->
+          <div class="cart-trust">
+            <div class="cart-trust__item">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+              Thanh toán bảo mật 100%
+            </div>
+            <div class="cart-trust__item">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
+              Giao hàng toàn quốc
+            </div>
+            <div class="cart-trust__item">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 2v6h6"></path><path d="M21 12A9 9 0 0 0 6 5.3L3 8"></path><path d="M21 22v-6h-6"></path><path d="M3 12a9 9 0 0 0 15 6.7l3-2.7"></path></svg>
+              Đổi trả trong 7 ngày
+            </div>
+          </div>
+
+          <div class="cart-summary__rows">
+            <div class="cart-summary__row">
+              <span>Tạm tính</span>
+              <span data-cart-subtotal>{formatCurrency(0)}</span>
+            </div>
+            <div class="cart-summary__row">
+              <span>Phí vận chuyển</span>
+              <span data-cart-shipping class="shipping-note">{formatCurrency(0)}</span>
+            </div>
+            <div class="cart-summary__row cart-summary__row--note">
+              <span>Miễn phí vận chuyển cho đơn &gt; 500.000đ</span>
+            </div>
+          </div>
+
+          <div class="cart-summary__total">
+            <span>Tổng cộng</span>
+            <strong data-cart-total>{formatCurrency(0)}</strong>
+          </div>
+
+          <button type="button" class="cart-summary__checkout" data-cart-checkout disabled>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+            Tiến hành thanh toán
+          </button>
+
+          <a href="/" class="cart-continue-link">← Tiếp tục mua sắm</a>
+        </div>
+      </aside>
+    </div>
+
+    <!-- Mobile sticky CTA (only shown on mobile when cart has items) -->
+    <div class="cart-mobile-bar" data-cart-mobile-bar hidden>
+      <div class="cart-mobile-bar__total">
+        <span>Tổng cộng</span>
+        <strong data-cart-mobile-total></strong>
+      </div>
+      <button type="button" class="cart-mobile-bar__btn" data-cart-checkout-mobile disabled>
+        Thanh toán →
+      </button>
+    </div>
+
+    <!-- Item template -->
+    <template data-cart-item-template>
+      <article class="cart-item" data-cart-item>
+        <a class="cart-item__media" data-cart-item-link>
+          <img class="cart-item__image" data-cart-item-image alt="" loading="lazy" />
+        </a>
+
+        <div class="cart-item__info">
+          <h2>
+            <a data-cart-item-link data-cart-item-name></a>
+          </h2>
+          <div class="cart-item__unit-price">
+            Đơn giá: <strong data-cart-item-unit-price></strong>
+          </div>
+        </div>
+
+        <div class="cart-item__qty-col">
+          <div class="cart-quantity" aria-label="Điều chỉnh số lượng">
+            <button type="button" aria-label="Giảm số lượng" data-cart-decrement>−</button>
+            <span data-cart-quantity></span>
+            <button type="button" aria-label="Tăng số lượng" data-cart-increment>+</button>
+          </div>
+        </div>
+
+        <div class="cart-item__price-col">
+          <strong data-cart-item-price></strong>
+          <button type="button" class="cart-item__remove" data-cart-remove aria-label="Xóa sản phẩm">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>
+            Xóa
+          </button>
+        </div>
+      </article>
+    </template>
+  </section>
+</MainLayout>
+
+<script>
+  import {
+    formatCartCurrency,
+    getCartCount,
+    readCart,
+    removeFromCart,
+    subscribeCartUpdates,
+    updateCartQuantity
+  } from "../scripts/cart";
+  import type { CartItem } from "../scripts/cart";
+
+  const cartPage = document.querySelector<HTMLElement>("[data-cart-page]");
+
+  if (cartPage) {
+    const shippingBase = Number(cartPage.dataset.shippingFee ?? 0);
+    const headingCount = cartPage.querySelector<HTMLElement>("[data-cart-heading-count]");
+    const emptyState = cartPage.querySelector<HTMLElement>("[data-cart-empty]");
+    const layout = cartPage.querySelector<HTMLElement>("[data-cart-layout]");
+    const itemsContainer = cartPage.querySelector<HTMLElement>("[data-cart-items]");
+    const template = cartPage.querySelector<HTMLTemplateElement>("template[data-cart-item-template]");
+    const subtotalNode = cartPage.querySelector<HTMLElement>("[data-cart-subtotal]");
+    const shippingNode = cartPage.querySelector<HTMLElement>("[data-cart-shipping]");
+    const totalNode = cartPage.querySelector<HTMLElement>("[data-cart-total]");
+    const checkoutButton = cartPage.querySelector<HTMLButtonElement>("[data-cart-checkout]");
+
+    const createItemNode = (item: CartItem): DocumentFragment => {
+      if (!template) return document.createDocumentFragment();
+
+      const fragment = template.content.cloneNode(true) as DocumentFragment;
+      const card = fragment.querySelector<HTMLElement>("[data-cart-item]");
+      const image = fragment.querySelector<HTMLImageElement>("[data-cart-item-image]");
+      const name = fragment.querySelector<HTMLElement>("[data-cart-item-name]");
+      const price = fragment.querySelector<HTMLElement>("[data-cart-item-price]");
+      const unitPrice = fragment.querySelector<HTMLElement>("[data-cart-item-unit-price]");
+      const quantity = fragment.querySelector<HTMLElement>("[data-cart-quantity]");
+      const links = fragment.querySelectorAll<HTMLAnchorElement>("[data-cart-item-link]");
+
+      if (card) card.dataset.productId = String(item.id);
+      if (image) { image.src = item.image; image.alt = item.name; }
+      if (name) name.textContent = item.name;
+      if (price) price.textContent = formatCartCurrency(item.price * item.quantity);
+      if (unitPrice) unitPrice.textContent = formatCartCurrency(item.price);
+      if (quantity) quantity.textContent = String(item.quantity);
+      links.forEach((link: HTMLAnchorElement) => { link.href = item.url; });
+
+      return fragment;
+    };
+
+    const renderCart = (items: CartItem[] = readCart()) => {
+      const itemCount = getCartCount(items);
+      const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+      const shipping = items.length > 0 ? shippingBase : 0;
+      const total = subtotal + shipping;
+
+      const mobileBar = cartPage.querySelector<HTMLElement>("[data-cart-mobile-bar]");
+      const mobileTotal = cartPage.querySelector<HTMLElement>("[data-cart-mobile-total]");
+      const mobileCheckout = cartPage.querySelector<HTMLButtonElement>("[data-cart-checkout-mobile]");
+
+      if (headingCount) {
+        headingCount.textContent = itemCount > 0 ? `(${itemCount})` : "";
+      }
+      if (subtotalNode) subtotalNode.textContent = formatCartCurrency(subtotal);
+      if (shippingNode) shippingNode.textContent = formatCartCurrency(shipping);
+      if (totalNode) totalNode.textContent = formatCartCurrency(total);
+      if (mobileTotal) mobileTotal.textContent = formatCartCurrency(total);
+      if (emptyState) emptyState.hidden = items.length > 0;
+      if (layout) layout.hidden = items.length === 0;
+      if (checkoutButton) checkoutButton.disabled = items.length === 0;
+      if (mobileBar) mobileBar.hidden = items.length === 0;
+      if (mobileCheckout) mobileCheckout.disabled = items.length === 0;
+
+      if (itemsContainer) {
+        itemsContainer.replaceChildren();
+        items.forEach((item) => itemsContainer.append(createItemNode(item)));
+      }
+    };
+
+    itemsContainer?.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+
+      const actionButton = target.closest<HTMLButtonElement>("button");
+      const itemCard = target.closest<HTMLElement>("[data-cart-item]");
+      if (!actionButton || !itemCard) return;
+
+      const productId = Number(itemCard.dataset.productId ?? 0);
+      if (!productId) return;
+
+      const currentItem = readCart().find((item) => item.id === productId);
+      if (!currentItem) return;
+
+      if (actionButton.hasAttribute("data-cart-remove")) removeFromCart(productId);
+      if (actionButton.hasAttribute("data-cart-increment")) updateCartQuantity(productId, currentItem.quantity + 1);
+      if (actionButton.hasAttribute("data-cart-decrement")) updateCartQuantity(productId, currentItem.quantity - 1);
+    });
+
+    checkoutButton?.addEventListener("click", () => {
+      if (!checkoutButton.disabled) window.location.href = "/payment";
+    });
+
+    cartPage.querySelector("[data-cart-checkout-mobile]")?.addEventListener("click", () => {
+      window.location.href = "/payment";
+    });
+
+    subscribeCartUpdates((items: CartItem[]) => renderCart(items));
+    window.addEventListener("storage", () => renderCart());
+    renderCart();
+  }
+</script>
+
+<style>
+  .cart-page {
+    min-height: calc(100vh - 260px);
+    padding-bottom: 60px;
+  }
+
+  /* ── PAGE HEADER ──────────────────────────── */
+  .cart-page__header {
+    margin-bottom: 28px;
+  }
+
+  .cart-page__header h1 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: clamp(1.5rem, 4vw, 2rem);
+    font-weight: 800;
+    margin: 12px 0 0;
+    color: var(--text, #0f172a);
+  }
+
+  .cart-count-label {
+    font-size: 1.1rem;
+    color: var(--muted, #64748b);
+    font-weight: 500;
+  }
+
+  /* ── EMPTY STATE ──────────────────────────── */
+  .cart-empty {
+    max-width: 480px;
+    margin: 48px auto;
+    text-align: center;
+    padding: 48px 32px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    box-shadow: 0 4px 16px rgba(15,23,42,0.06);
+  }
+
+  .cart-empty__icon {
+    font-size: 3.5rem;
+    margin-bottom: 16px;
+  }
+
+  .cart-empty h2 {
+    font-size: 1.4rem;
+    margin: 0 0 10px;
+    color: #0f172a;
+  }
+
+  .cart-empty p {
+    color: #64748b;
+    line-height: 1.6;
+    margin: 0 0 24px;
+    font-size: 0.95rem;
+  }
+
+  .btn-cart-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 46px;
+    padding: 0 24px;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: #fff;
+    font-weight: 700;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    transition: all 0.25s ease;
+    box-shadow: 0 4px 14px rgba(37,99,235,0.25);
+  }
+
+  .btn-cart-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(37,99,235,0.3);
+  }
+
+  /* ── CART LAYOUT ──────────────────────────── */
+  .cart-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 24px;
+    align-items: start;
+  }
+
+  /* ── ITEMS COLUMN ────────────────────────── */
+  .cart-items-col {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(15,23,42,0.05);
+  }
+
+  .cart-items-header {
+    display: grid;
+    grid-template-columns: minmax(0,1fr) 130px 120px;
+    gap: 16px;
+    padding: 13px 20px;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .cart-items-header span:not(:first-child) {
+    text-align: center;
+  }
+
+  .cart-items {
+    display: grid;
+  }
+
+  /* ── CART ITEM ───────────────────────────── */
+  .cart-item {
+    display: grid;
+    grid-template-columns: 88px minmax(0,1fr) 130px 120px;
+    gap: 16px;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid #f1f5f9;
+    transition: background 0.2s;
+  }
+
+  .cart-item:last-child {
+    border-bottom: none;
+  }
+
+  .cart-item:hover {
+    background: #fafbff;
+  }
+
+  .cart-item__media {
+    display: block;
+    width: 80px;
+    height: 80px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+    background: #f8fafc;
+    flex-shrink: 0;
+    transition: opacity 0.2s;
+  }
+
+  .cart-item__media:hover {
+    opacity: 0.9;
+  }
+
+  .cart-item__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .cart-item__info {
+    min-width: 0;
+  }
+
+  .cart-item__info h2 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1.4;
+    color: #0f172a;
+    margin: 0 0 6px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .cart-item__info a:hover {
+    color: #2563eb;
+  }
+
+  .cart-item__unit-price {
+    font-size: 0.8rem;
+    color: #94a3b8;
+  }
+
+  .cart-item__unit-price strong {
+    color: #64748b;
+  }
+
+  .cart-item__qty-col {
+    display: flex;
+    justify-content: center;
+  }
+
+  .cart-quantity {
+    display: inline-grid;
+    grid-template-columns: 34px 40px 34px;
+    align-items: center;
+    height: 38px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #fff;
+  }
+
+  .cart-quantity button,
+  .cart-quantity span {
+    display: grid;
+    place-items: center;
+    height: 100%;
+  }
+
+  .cart-quantity button {
+    border: none;
+    background: #f8fafc;
+    color: #475569;
+    cursor: pointer;
+    padding: 0;
+    font-size: 1.15rem;
+    transition: all 0.15s;
+  }
+
+  .cart-quantity button:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+  }
+
+  .cart-quantity span {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #0f172a;
+    border-left: 1px solid #e2e8f0;
+    border-right: 1px solid #e2e8f0;
+  }
+
+  .cart-item__price-col {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+    text-align: right;
+  }
+
+  .cart-item__price-col strong {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #dc2626;
+  }
+
+  .cart-item__remove {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    border: none;
+    background: transparent;
+    color: #94a3b8;
+    font-size: 0.78rem;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: all 0.2s;
+  }
+
+  .cart-item__remove:hover {
+    background: #fef2f2;
+    color: #dc2626;
+  }
+
+  /* ── SUMMARY SIDEBAR ─────────────────────── */
+  .cart-summary {
+    position: sticky;
+    top: 108px;
+  }
+
+  .cart-summary__inner {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    padding: 22px 20px;
+    box-shadow: 0 4px 16px rgba(15,23,42,0.07);
+  }
+
+  .cart-summary h2 {
+    font-size: 1.15rem;
+    font-weight: 800;
+    margin: 0 0 16px;
+    color: #0f172a;
+    padding-bottom: 14px;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  /* trust */
+  .cart-trust {
+    display: grid;
+    gap: 8px;
+    margin-bottom: 18px;
+    padding: 12px 14px;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 10px;
+  }
+
+  .cart-trust__item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #166534;
+  }
+
+  .cart-trust__item svg {
+    flex-shrink: 0;
+    color: #16a34a;
+  }
+
+  .cart-summary__rows {
+    display: grid;
+    gap: 11px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid #e2e8f0;
+    margin-bottom: 14px;
+  }
+
+  .cart-summary__row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.9rem;
+    color: #334155;
+  }
+
+  .cart-summary__row--note {
+    font-size: 0.76rem;
+    color: #16a34a;
+    font-weight: 500;
+    justify-content: flex-start;
+  }
+
+  .shipping-note {
+    font-size: 0.85rem;
+  }
+
+  .cart-summary__total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #0f172a;
+  }
+
+  .cart-summary__total strong {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #dc2626;
+    line-height: 1;
+  }
+
+  .cart-summary__checkout {
+    width: 100%;
+    min-height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(37,99,235,0.25);
+    transition: all 0.25s ease;
+    margin-bottom: 12px;
+  }
+
+  .cart-summary__checkout:hover:not(:disabled) {
+    background: linear-gradient(135deg, #1d4ed8, #1e40af);
+    transform: translateY(-1px);
+    box-shadow: 0 10px 24px rgba(37,99,235,0.3);
+  }
+
+  .cart-summary__checkout:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+
+  .cart-continue-link {
+    display: block;
+    text-align: center;
+    font-size: 0.85rem;
+    color: #64748b;
+    transition: color 0.2s;
+  }
+
+  .cart-continue-link:hover {
+    color: #2563eb;
+  }
+
+  /* ── RESPONSIVE ──────────────────────────── */
+  /* ── MOBILE STICKY BAR ───────────────────── */
+  .cart-mobile-bar {
+    display: none;
+  }
+
+  @media (max-width: 900px) {
+    .cart-layout {
+      grid-template-columns: 1fr;
+    }
+
+    .cart-summary {
+      position: static;
+    }
+
+    .cart-items-header {
+      display: none;
+    }
+
+    .cart-item {
+      grid-template-columns: 72px minmax(0,1fr) auto;
+      grid-template-rows: auto auto;
+      gap: 12px;
+    }
+
+    .cart-item__qty-col {
+      grid-column: 2;
+      justify-content: flex-start;
+    }
+
+    .cart-item__price-col {
+      grid-column: 3;
+      grid-row: 1 / 3;
+      justify-content: center;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .cart-page {
+      padding-bottom: 88px; /* space for sticky bar */
+    }
+
+    /* Hide inline checkout button, show sticky bar instead */
+    .cart-summary__checkout {
+      display: none;
+    }
+
+    .cart-continue-link {
+      display: none;
+    }
+
+    .cart-mobile-bar {
+      display: flex;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 16px;
+      background: #fff;
+      border-top: 1px solid #e2e8f0;
+      box-shadow: 0 -6px 24px rgba(15,23,42,0.1);
+      z-index: 90;
+    }
+
+    .cart-mobile-bar__total {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .cart-mobile-bar__total span {
+      font-size: 0.75rem;
+      color: #64748b;
+    }
+
+    .cart-mobile-bar__total strong {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #dc2626;
+    }
+
+    .cart-mobile-bar__btn {
+      flex-shrink: 0;
+      height: 46px;
+      padding: 0 22px;
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      color: #fff;
+      font-size: 0.92rem;
+      font-weight: 700;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(37,99,235,0.3);
+      transition: all 0.2s ease;
+    }
+
+    .cart-mobile-bar__btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .cart-item {
+      padding: 14px 16px;
+      grid-template-columns: 64px minmax(0,1fr) auto;
+    }
+
+    .cart-item__media {
+      width: 64px;
+      height: 64px;
+    }
+
+    .cart-summary__inner {
+      padding: 18px 16px;
+    }
+  }
+</style>

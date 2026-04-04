@@ -1,0 +1,296 @@
+﻿---
+import MainLayout from "../layouts/MainLayout.astro";
+import { getProducts } from "../lib/products";
+import { buildPageTitle } from "../lib/seo";
+
+const title = buildPageTitle("Tim kiem san pham");
+const description = "Trang tim kiem san pham theo tu khoa.";
+const products = await getProducts();
+
+function normalizeSearchText(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+const searchIndex = products.map((product) => {
+  const image =
+    product.images[0]?.src ?? "https://placehold.co/800x800/eceff3/1b2430?text=Tap+Hoa+Tech";
+  const displayPrice = product.sale_price ?? product.regular_price;
+
+  return {
+    id: product.id,
+    slug: product.slug,
+    name: product.name,
+    image,
+    flash: product.flash,
+    regularPrice: product.regular_price,
+    displayPrice,
+    searchKey: normalizeSearchText(
+      [product.name, product.short_description, ...product.categories].join(" ")
+    )
+  };
+});
+---
+
+<MainLayout title={title} description={description} noindex>
+  <section class="search-page" data-search-page>
+    <div class="section-box search-page__box">
+      <div class="search-page__header">
+        <h1 data-search-title>Tim kiem san pham</h1>
+        <p data-search-meta>Nhap tu khoa tren o tim kiem de bat dau.</p>
+      </div>
+
+      <div class="products-grid" data-search-results></div>
+
+      <div class="empty-state" data-search-empty hidden>
+        <h2>Khong tim thay san pham phu hop</h2>
+        <p>Thu doi tu khoa ngan gon hon hoac bo dau tieng Viet.</p>
+        <a href="/" class="search-page__empty-link">Quay lai trang chu</a>
+      </div>
+    </div>
+
+    <template data-search-card-template>
+      <article class="product-card">
+        <a class="product-card__image" data-product-link>
+          <img data-product-image alt="" loading="lazy" />
+          <div class="product-badge product-badge--red" data-product-badge hidden>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" /></svg>
+            <span>Flash Sale</span>
+          </div>
+        </a>
+
+        <div class="product-card__body">
+          <div class="rating-line">
+            <span class="stars">★★★★★</span>
+            <span class="score">5.0/5</span>
+            <span class="rating-count">(1)</span>
+          </div>
+
+          <h3 class="product-title">
+            <a data-product-link data-product-name></a>
+          </h3>
+
+          <div class="product-card__footer">
+            <div class="price-container">
+              <strong data-product-price></strong>
+              <s data-product-regular hidden></s>
+            </div>
+
+            <button class="cart-add-btn" type="button" data-product-cart-button>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+            </button>
+          </div>
+        </div>
+      </article>
+    </template>
+
+    <script is:inline id="search-index-data" type="application/json" set:html={JSON.stringify(searchIndex)} />
+  </section>
+</MainLayout>
+
+<script>
+  interface SearchItem {
+    id: number;
+    slug: string;
+    name: string;
+    image: string;
+    flash: boolean;
+    regularPrice: number;
+    displayPrice: number;
+    searchKey: string;
+  }
+
+  const searchPage = document.querySelector<HTMLElement>("[data-search-page]");
+
+  if (searchPage) {
+    const titleNode = searchPage.querySelector<HTMLElement>("[data-search-title]");
+    const metaNode = searchPage.querySelector<HTMLElement>("[data-search-meta]");
+    const resultsNode = searchPage.querySelector<HTMLElement>("[data-search-results]");
+    const emptyNode = searchPage.querySelector<HTMLElement>("[data-search-empty]");
+    const template = searchPage.querySelector<HTMLTemplateElement>("template[data-search-card-template]");
+    const indexNode = searchPage.querySelector<HTMLScriptElement>("#search-index-data");
+
+    const formatter = new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
+      maximumFractionDigits: 0
+    });
+
+    const normalizeSearchText = (value: string): string =>
+      value
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/đ/g, "d")
+        .replace(/\s+/g, " ")
+        .trim();
+
+    const parsedIndex = (() => {
+      if (!indexNode?.textContent) {
+        return [] as SearchItem[];
+      }
+
+      try {
+        const data = JSON.parse(indexNode.textContent) as SearchItem[];
+        return Array.isArray(data) ? data : [];
+      } catch {
+        return [] as SearchItem[];
+      }
+    })();
+
+    const createProductNode = (product: SearchItem): DocumentFragment => {
+      if (!template) {
+        return document.createDocumentFragment();
+      }
+
+      const fragment = template.content.cloneNode(true) as DocumentFragment;
+      const links = fragment.querySelectorAll<HTMLAnchorElement>("[data-product-link]");
+      const image = fragment.querySelector<HTMLImageElement>("[data-product-image]");
+      const name = fragment.querySelector<HTMLElement>("[data-product-name]");
+      const badge = fragment.querySelector<HTMLElement>("[data-product-badge]");
+      const price = fragment.querySelector<HTMLElement>("[data-product-price]");
+      const regular = fragment.querySelector<HTMLElement>("[data-product-regular]");
+      const cartButton = fragment.querySelector<HTMLButtonElement>("[data-product-cart-button]");
+      const productUrl = `/products/${product.slug}/`;
+
+      links.forEach((link) => {
+        link.href = productUrl;
+      });
+
+      if (image) {
+        image.src = product.image;
+        image.alt = product.name;
+      }
+
+      if (name) {
+        name.textContent = product.name;
+      }
+
+      if (badge) {
+        badge.hidden = !product.flash;
+      }
+
+      if (price) {
+        price.textContent = formatter.format(product.displayPrice);
+        price.classList.add(product.flash ? "price-red" : "price-blue");
+      }
+
+      if (regular && product.displayPrice < product.regularPrice) {
+        regular.hidden = false;
+        regular.textContent = formatter.format(product.regularPrice);
+      }
+
+      if (cartButton) {
+        cartButton.setAttribute("aria-label", `Them ${product.name} vao gio hang`);
+        cartButton.setAttribute("title", "Them vao gio hang");
+        cartButton.dataset.addToCart = "";
+        cartButton.dataset.productId = String(product.id);
+        cartButton.dataset.productSlug = product.slug;
+        cartButton.dataset.productName = product.name;
+        cartButton.dataset.productPrice = String(product.displayPrice);
+        cartButton.dataset.productRegularPrice = String(product.regularPrice);
+        cartButton.dataset.productImage = product.image;
+        cartButton.dataset.productUrl = productUrl;
+      }
+
+      return fragment;
+    };
+
+    const renderResults = (query: string) => {
+      if (!resultsNode || !metaNode || !titleNode || !emptyNode) {
+        return;
+      }
+
+      const normalizedQuery = normalizeSearchText(query);
+      const terms = normalizedQuery.split(" ").filter(Boolean);
+      const maxResults = 60;
+
+      titleNode.textContent = query ? `Ket qua tim kiem: ${query}` : "Tim kiem san pham";
+
+      if (terms.length === 0) {
+        resultsNode.replaceChildren();
+        emptyNode.hidden = true;
+        metaNode.textContent = "Nhap tu khoa tren o tim kiem de bat dau.";
+        return;
+      }
+
+      const matched = parsedIndex.filter((item) => terms.every((term) => item.searchKey.includes(term)));
+      const visibleItems = matched.slice(0, maxResults);
+
+      resultsNode.replaceChildren();
+      visibleItems.forEach((item) => {
+        resultsNode.append(createProductNode(item));
+      });
+
+      if (matched.length > maxResults) {
+        metaNode.textContent = `Tim thay ${matched.length} ket qua. Dang hien thi ${maxResults} ket qua dau tien.`;
+      } else {
+        metaNode.textContent = `Tim thay ${matched.length} ket qua.`;
+      }
+
+      emptyNode.hidden = matched.length > 0;
+    };
+
+    const currentQuery = new URLSearchParams(window.location.search).get("q") ?? "";
+    renderResults(currentQuery.trim());
+  }
+</script>
+
+<style>
+  :global(body) {
+    background: #ffffff;
+  }
+
+  .search-page {
+    min-height: calc(100vh - 220px);
+    padding: 8px 0 96px;
+  }
+
+  .search-page__box {
+    padding: 22px;
+  }
+
+  .search-page__header {
+    margin-bottom: 20px;
+  }
+
+  .search-page__header h1 {
+    margin: 0;
+    font-size: clamp(1.8rem, 3vw, 2.35rem);
+    line-height: 1.12;
+    letter-spacing: -0.02em;
+  }
+
+  .search-page__header p {
+    margin: 10px 0 0;
+    color: #64748b;
+  }
+
+  .search-page__empty-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 42px;
+    padding: 0 18px;
+    border-radius: 999px;
+    background: #2563eb;
+    color: #ffffff;
+    font-weight: 700;
+  }
+
+  @media (max-width: 640px) {
+    .search-page {
+      padding-bottom: 64px;
+    }
+
+    .search-page__box {
+      padding: 16px;
+    }
+  }
+</style>
+

@@ -1,0 +1,374 @@
+---
+import { buildAdminCredentialHash } from "../../lib/admin-hash";
+import MainLayout from "../../layouts/MainLayout.astro";
+import { buildPageTitle } from "../../lib/seo";
+
+const title = buildPageTitle("Đăng nhập Admin");
+const description = "Đăng nhập vào khu vực quản trị đơn hàng của Đông Tạp Hóa.";
+
+const rawAdminUsername = (import.meta.env.ADMIN_USERNAME ?? "").trim();
+const rawAdminPassword = (import.meta.env.ADMIN_PASSWORD ?? "").trim();
+const configuredTtl = Number(import.meta.env.ADMIN_SESSION_TTL_MINUTES ?? 480);
+const adminSessionTtlMinutes = Number.isFinite(configuredTtl) ? Math.max(5, Math.floor(configuredTtl)) : 480;
+
+const adminAuthConfigured = rawAdminUsername.length > 0 && rawAdminPassword.length > 0;
+const adminCredentialHash = adminAuthConfigured ? buildAdminCredentialHash(rawAdminUsername, rawAdminPassword) : "";
+---
+
+<MainLayout title={title} description={description} noindex>
+  <section
+    class="admin-login"
+    data-admin-login
+    data-admin-auth-configured={adminAuthConfigured ? "true" : "false"}
+    data-admin-credential-hash={adminCredentialHash}
+    data-admin-session-ttl={String(adminSessionTtlMinutes)}
+  >
+    <div class="admin-login__inner">
+      <header class="admin-login__badge">
+        <div class="brand__mark brand__mark--sm">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+        </div>
+        <span>Hệ thống quản trị</span>
+      </header>
+
+      <article class="admin-login__card">
+        <div class="admin-login__header">
+          <h1>Chào mừng trở lại</h1>
+          <p>Vui lòng đăng nhập để quản lý đơn hàng của bạn.</p>
+        </div>
+
+        <div class="admin-login__status" data-admin-login-status hidden></div>
+
+        <form class="admin-login__form" data-admin-login-form>
+          <div class="form-group">
+            <label for="username">Tên đăng nhập</label>
+            <div class="input-wrapper">
+              <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+              <input type="text" id="username" name="username" placeholder="Nhập tài khoản admin" autocomplete="username" required />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="password">Mật khẩu</label>
+            <div class="input-wrapper">
+              <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+              <input type="password" id="password" name="password" placeholder="••••••••" autocomplete="current-password" required />
+            </div>
+          </div>
+
+          <button type="submit" class="btn-login-submit" data-admin-login-submit>
+            <span>Đăng nhập hệ thống</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+          </button>
+        </form>
+
+        <footer class="admin-login__footer">
+          <p>© {new Date().getFullYear()} Đông Tạp Hóa. All rights reserved.</p>
+        </footer>
+      </article>
+    </div>
+  </section>
+</MainLayout>
+
+<script>
+  import {
+    clearAdminSession,
+    createAdminSession,
+    hashAdminCredential,
+    isAdminSessionValid
+  } from "../../scripts/admin-auth";
+
+  const page = document.querySelector<HTMLElement>("[data-admin-login]");
+
+  if (page) {
+    const statusNode = page.querySelector<HTMLElement>("[data-admin-login-status]");
+    const form = page.querySelector<HTMLFormElement>("[data-admin-login-form]");
+    const submitButton = page.querySelector<HTMLButtonElement>("[data-admin-login-submit]");
+
+    const authConfigured = page.dataset.adminAuthConfigured === "true";
+    const credentialHash = (page.dataset.adminCredentialHash ?? "").trim();
+    const sessionTtl = Number(page.dataset.adminSessionTtl ?? "480");
+
+    const setStatus = (message: string, kind: "info" | "error") => {
+      if (!statusNode) return;
+      statusNode.hidden = false;
+      statusNode.textContent = message;
+      statusNode.className = `admin-login__status is-${kind === 'error' ? 'error' : 'info'}`;
+    };
+
+    const clearStatus = () => {
+      if (!statusNode) return;
+      statusNode.hidden = true;
+      statusNode.textContent = "";
+      statusNode.className = "admin-login__status";
+    };
+
+    const params = new URLSearchParams(window.location.search);
+    const shouldLogout = params.get("logout") === "1";
+    const configError = params.get("error") === "config";
+
+    if (shouldLogout) {
+      clearAdminSession();
+    }
+
+    if (configError) {
+      setStatus("Tài khoản admin chưa được cấu hình trên máy chủ.", "error");
+    }
+
+    if (!authConfigured || !credentialHash) {
+      setStatus("Chưa cấu hình ADMIN_USERNAME/ADMIN_PASSWORD trong tệp .env.", "error");
+      if (submitButton) submitButton.disabled = true;
+    } else if (isAdminSessionValid(credentialHash)) {
+      window.location.href = "/admin/orders";
+    } else {
+      form?.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        clearStatus();
+
+        if (!form) return;
+
+        const formData = new FormData(form);
+        const username = String(formData.get("username") ?? "").trim();
+        const password = String(formData.get("password") ?? "");
+
+        if (!username || !password) {
+          setStatus("Vui lòng nhập đầy đủ tài khoản và mật khẩu.", "error");
+          return;
+        }
+
+        const originalLabel = submitButton?.querySelector("span")?.textContent ?? "Đăng nhập";
+        if (submitButton) {
+          submitButton.disabled = true;
+          const span = submitButton.querySelector("span");
+          if (span) span.textContent = "Đang kiểm tra...";
+        }
+
+        try {
+          const enteredHash = hashAdminCredential(username, password);
+          if (enteredHash !== credentialHash) {
+            setStatus("Thông tin đăng nhập không chính xác.", "error");
+            return;
+          }
+
+          createAdminSession(credentialHash, sessionTtl);
+          window.location.href = "/admin/orders";
+        } catch (error) {
+          setStatus(error instanceof Error ? error.message : "Đăng nhập thất bại.", "error");
+        } finally {
+          if (submitButton) {
+            submitButton.disabled = false;
+            const span = submitButton.querySelector("span");
+            if (span) span.textContent = originalLabel;
+          }
+        }
+      });
+    }
+  }
+</script>
+
+<style>
+  :global(body) {
+    background: #f8fafc;
+    background-image:
+      radial-gradient(at 0% 0%, rgba(37, 99, 235, 0.05) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, rgba(37, 99, 235, 0.05) 0px, transparent 50%);
+  }
+
+  .admin-login {
+    min-height: calc(100vh - 180px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+  }
+
+  .admin-login__inner {
+    width: 100%;
+    max-width: 440px;
+  }
+
+  .admin-login__badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 24px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .brand__mark {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: #fff;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+  }
+
+  .admin-login__card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 24px;
+    padding: 40px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05),
+                0 10px 10px -5px rgba(0, 0, 0, 0.02);
+  }
+
+  .admin-login__header {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+
+  .admin-login__header h1 {
+    font-size: 1.85rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 8px;
+    letter-spacing: -0.025em;
+  }
+
+  .admin-login__header p {
+    color: #64748b;
+    font-size: 0.95rem;
+  }
+
+  .admin-login__status {
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 24px;
+    animation: slideDown 0.3s ease;
+  }
+
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .admin-login__status.is-info {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #1d4ed8;
+  }
+
+  .admin-login__status.is-error {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #b91c1c;
+  }
+
+  .admin-login__form {
+    display: grid;
+    gap: 20px;
+  }
+
+  .form-group {
+    display: grid;
+    gap: 8px;
+  }
+
+  .form-group label {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #334155;
+    padding-left: 4px;
+  }
+
+  .input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .input-icon {
+    position: absolute;
+    left: 14px;
+    color: #94a3b8;
+    pointer-events: none;
+    transition: color 0.2s;
+  }
+
+  .admin-login__form input {
+    width: 100%;
+    height: 48px;
+    padding: 0 16px 0 44px;
+    background: #f8fafc;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    outline: none;
+  }
+
+  .admin-login__form input:focus {
+    background: #fff;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+  }
+
+  .admin-login__form input:focus + .input-icon {
+    color: #2563eb;
+  }
+
+  .btn-login-submit {
+    height: 52px;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.2);
+    margin-top: 8px;
+  }
+
+  .btn-login-submit:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 20px 25px -5px rgba(37, 99, 235, 0.25);
+    filter: brightness(1.05);
+  }
+
+  .btn-login-submit:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  .btn-login-submit:disabled {
+    opacity: 0.7;
+    cursor: wait;
+  }
+
+  .admin-login__footer {
+    margin-top: 40px;
+    text-align: center;
+    padding-top: 24px;
+    border-top: 1px solid #f1f5f9;
+  }
+
+  .admin-login__footer p {
+    font-size: 0.78rem;
+    color: #94a3b8;
+  }
+
+  @media (max-width: 480px) {
+    .admin-login__card {
+      padding: 32px 24px;
+    }
+    .admin-login__header h1 {
+      font-size: 1.6rem;
+    }
+  }
+</style>

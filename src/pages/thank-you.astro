@@ -1,0 +1,570 @@
+﻿---
+import MainLayout from "../layouts/MainLayout.astro";
+import { buildPageTitle } from "../lib/seo";
+
+const title = buildPageTitle("Cảm ơn");
+const description = "Thông tin đơn hàng vừa đặt tại Đông Tạp Hóa.";
+---
+
+<MainLayout title={title} description={description} noindex>
+  <section class="thanks-page" data-thanks-page>
+    
+    <div class="thanks-empty" data-thanks-empty hidden>
+      <div class="thanks-empty__icon">📦</div>
+      <h2>Không tìm thấy thông tin đơn hàng mới</h2>
+      <p>Vui lòng quay lại giỏ hàng và thực hiện đặt hàng để xem trang cảm ơn.</p>
+      <div class="thanks-empty__actions">
+        <a href="/cart" class="btn-outline">Quay lại giỏ hàng</a>
+        <a href="/" class="btn-primary">Về trang chủ</a>
+      </div>
+    </div>
+
+    <div class="thanks-content" data-thanks-content hidden>
+      <div class="thanks-hero">
+        <div class="thanks-hero__icon">🎉</div>
+        <h1>Cảm ơn bạn đã đặt hàng!</h1>
+        <p>Đơn hàng của bạn đã được ghi nhận. Chúng tôi sẽ liên hệ xác nhận trong thời gian sớm nhất.</p>
+      </div>
+
+      <div class="thanks-order-id">
+        Mã đơn hàng: <strong data-thanks-order-id>#--</strong>
+      </div>
+
+      <div class="thanks-card">
+        <h2>Thông tin đơn hàng</h2>
+
+        <div class="thanks-grid">
+          <div class="thanks-field">
+            <span>Người nhận</span>
+            <strong data-thanks-name>--</strong>
+          </div>
+          <div class="thanks-field">
+            <span>Số điện thoại</span>
+            <strong data-thanks-phone>--</strong>
+          </div>
+          <div class="thanks-field">
+            <span>Email</span>
+            <strong data-thanks-email>--</strong>
+          </div>
+          <div class="thanks-field">
+            <span>Phương thức thanh toán</span>
+            <strong data-thanks-method>--</strong>
+          </div>
+          <div class="thanks-field thanks-field--full">
+            <span>Địa chỉ giao hàng</span>
+            <strong data-thanks-address>--</strong>
+          </div>
+          <div class="thanks-field thanks-field--full" data-thanks-note-wrap hidden>
+            <span>Ghi chú</span>
+            <strong data-thanks-note>--</strong>
+          </div>
+          <div class="thanks-field">
+            <span>Trạng thái</span>
+            <strong class="status-pill" data-thanks-status>Chờ xử lý</strong>
+          </div>
+          <div class="thanks-field">
+            <span>Thời gian đặt</span>
+            <strong data-thanks-date>--</strong>
+          </div>
+        </div>
+
+        <div class="thanks-divider"></div>
+
+        <h3>Sản phẩm đã đặt</h3>
+        <div class="thanks-items" data-thanks-items></div>
+
+        <div class="thanks-totals">
+          <div class="thanks-total-row">
+            <span>Tạm tính</span>
+            <strong data-thanks-subtotal>--</strong>
+          </div>
+          <div class="thanks-total-row">
+            <span>Phí vận chuyển</span>
+            <strong data-thanks-shipping>--</strong>
+          </div>
+          <div class="thanks-total-row thanks-total-row--grand">
+            <span>Tổng cộng</span>
+            <strong data-thanks-total>--</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="thanks-actions">
+        <a href="/" class="btn-outline">Về trang chủ</a>
+        <a href="/#ban-chay" class="btn-primary">Tiếp tục mua sắm</a>
+      </div>
+    </div>
+
+    <template data-thanks-item-template>
+      <article class="thanks-item-row">
+        <img data-thanks-item-image alt="" />
+        <div class="thanks-item-info">
+          <strong data-thanks-item-name></strong>
+          <p>
+            <span data-thanks-item-qty></span>
+            ×
+            <span data-thanks-item-price></span>
+          </p>
+        </div>
+        <strong data-thanks-item-total></strong>
+      </article>
+    </template>
+  </section>
+</MainLayout>
+
+<script>
+  import { formatCartCurrency } from "../scripts/cart";
+
+  interface LastOrderItem {
+    name: string;
+    price: number;
+    quantity: number;
+    image: string;
+  }
+
+  interface LastOrderSnapshot {
+    orderId: string;
+    fullName: string;
+    phone: string;
+    email: string;
+    address: string;
+    note: string;
+    method: string;
+    status: string;
+    subtotal: number;
+    shippingFee: number;
+    total: number;
+    itemCount: number;
+    createdAt: string;
+    items: LastOrderItem[];
+  }
+
+  const LAST_ORDER_STORAGE_KEY = "astro-shop-last-order";
+  const PAYMENT_LABEL: Record<string, string> = {
+    cod: "Thanh toán khi nhận hàng (COD)",
+    bank: "Chuyển khoản ngân hàng"
+  };
+
+  const thanksPage = document.querySelector<HTMLElement>("[data-thanks-page]");
+
+  if (thanksPage) {
+    const emptyState = thanksPage.querySelector<HTMLElement>("[data-thanks-empty]");
+    const content = thanksPage.querySelector<HTMLElement>("[data-thanks-content]");
+    const itemContainer = thanksPage.querySelector<HTMLElement>("[data-thanks-items]");
+    const itemTemplate = thanksPage.querySelector<HTMLTemplateElement>("template[data-thanks-item-template]");
+
+    const orderIdNode = thanksPage.querySelector<HTMLElement>("[data-thanks-order-id]");
+    const nameNode = thanksPage.querySelector<HTMLElement>("[data-thanks-name]");
+    const phoneNode = thanksPage.querySelector<HTMLElement>("[data-thanks-phone]");
+    const emailNode = thanksPage.querySelector<HTMLElement>("[data-thanks-email]");
+    const addressNode = thanksPage.querySelector<HTMLElement>("[data-thanks-address]");
+    const noteWrapNode = thanksPage.querySelector<HTMLElement>("[data-thanks-note-wrap]");
+    const noteNode = thanksPage.querySelector<HTMLElement>("[data-thanks-note]");
+    const methodNode = thanksPage.querySelector<HTMLElement>("[data-thanks-method]");
+    const statusNode = thanksPage.querySelector<HTMLElement>("[data-thanks-status]");
+    const dateNode = thanksPage.querySelector<HTMLElement>("[data-thanks-date]");
+    const subtotalNode = thanksPage.querySelector<HTMLElement>("[data-thanks-subtotal]");
+    const shippingNode = thanksPage.querySelector<HTMLElement>("[data-thanks-shipping]");
+    const totalNode = thanksPage.querySelector<HTMLElement>("[data-thanks-total]");
+
+    const showEmpty = () => {
+      if (content) content.hidden = true;
+      if (emptyState) emptyState.hidden = false;
+    };
+
+    const readSnapshot = (): LastOrderSnapshot | null => {
+      try {
+        const raw = window.sessionStorage.getItem(LAST_ORDER_STORAGE_KEY);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw) as Partial<LastOrderSnapshot>;
+
+        if (!parsed || typeof parsed !== "object") return null;
+        if (!parsed.orderId || !Array.isArray(parsed.items)) return null;
+
+        return {
+          orderId: String(parsed.orderId),
+          fullName: String(parsed.fullName ?? ""),
+          phone: String(parsed.phone ?? ""),
+          email: String(parsed.email ?? ""),
+          address: String(parsed.address ?? ""),
+          note: String(parsed.note ?? ""),
+          method: String(parsed.method ?? "cod"),
+          status: String(parsed.status ?? "pending"),
+          subtotal: Number(parsed.subtotal ?? 0),
+          shippingFee: Number(parsed.shippingFee ?? 0),
+          total: Number(parsed.total ?? 0),
+          itemCount: Number(parsed.itemCount ?? 0),
+          createdAt: String(parsed.createdAt ?? ""),
+          items: parsed.items.map((item) => ({
+            name: String(item?.name ?? ""),
+            price: Number(item?.price ?? 0),
+            quantity: Number(item?.quantity ?? 0),
+            image: String(item?.image ?? "")
+          }))
+        };
+      } catch {
+        return null;
+      }
+    };
+
+    const snapshot = readSnapshot();
+    const orderParam = new URLSearchParams(window.location.search).get("order");
+
+    if (!snapshot) {
+      showEmpty();
+    } else if (orderParam && orderParam !== snapshot.orderId) {
+      showEmpty();
+    } else {
+      if (emptyState) emptyState.hidden = true;
+      if (content) content.hidden = false;
+
+      if (orderIdNode) orderIdNode.textContent = `#${snapshot.orderId}`;
+      if (nameNode) nameNode.textContent = snapshot.fullName || "--";
+      if (phoneNode) phoneNode.textContent = snapshot.phone || "--";
+      if (emailNode) emailNode.textContent = snapshot.email || "--";
+      if (addressNode) addressNode.textContent = snapshot.address || "--";
+      if (methodNode) methodNode.textContent = PAYMENT_LABEL[snapshot.method] ?? snapshot.method;
+      if (statusNode) statusNode.textContent = snapshot.status === "pending" ? "Chờ xử lý" : snapshot.status;
+
+      const created = snapshot.createdAt ? new Date(snapshot.createdAt) : null;
+      if (dateNode) {
+        if (created && !Number.isNaN(created.getTime())) {
+          dateNode.textContent = new Intl.DateTimeFormat("vi-VN", {
+            dateStyle: "medium",
+            timeStyle: "short"
+          }).format(created);
+        } else {
+          dateNode.textContent = "--";
+        }
+      }
+
+      if (snapshot.note) {
+        if (noteNode) noteNode.textContent = snapshot.note;
+        if (noteWrapNode) noteWrapNode.hidden = false;
+      }
+
+      if (subtotalNode) subtotalNode.textContent = formatCartCurrency(snapshot.subtotal);
+      if (shippingNode) shippingNode.textContent = formatCartCurrency(snapshot.shippingFee);
+      if (totalNode) totalNode.textContent = formatCartCurrency(snapshot.total);
+
+      if (itemContainer && itemTemplate) {
+        itemContainer.replaceChildren();
+        snapshot.items.forEach((item) => {
+          const fragment = itemTemplate.content.cloneNode(true) as DocumentFragment;
+          const imgNode = fragment.querySelector<HTMLImageElement>("[data-thanks-item-image]");
+          const nameItemNode = fragment.querySelector<HTMLElement>("[data-thanks-item-name]");
+          const qtyItemNode = fragment.querySelector<HTMLElement>("[data-thanks-item-qty]");
+          const priceItemNode = fragment.querySelector<HTMLElement>("[data-thanks-item-price]");
+          const totalItemNode = fragment.querySelector<HTMLElement>("[data-thanks-item-total]");
+
+          if (imgNode) {
+            imgNode.src = item.image;
+            imgNode.alt = item.name;
+          }
+          if (nameItemNode) nameItemNode.textContent = item.name;
+          if (qtyItemNode) qtyItemNode.textContent = String(item.quantity);
+          if (priceItemNode) priceItemNode.textContent = formatCartCurrency(item.price);
+          if (totalItemNode) totalItemNode.textContent = formatCartCurrency(item.price * item.quantity);
+
+          itemContainer.append(fragment);
+        });
+      }
+    }
+  }
+</script>
+
+<style>
+  .thanks-page {
+    padding: 40px 0 90px;
+    min-height: 80vh;
+  }
+
+  .thanks-steps {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 28px;
+    background: #fff;
+    padding: 16px 24px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+  }
+
+  .step {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    color: #94a3b8;
+  }
+
+  .step--active {
+    color: #2563eb;
+  }
+
+  .step--done {
+    color: #16a34a;
+  }
+
+  .step__num {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #e2e8f0;
+    color: #fff;
+    display: grid;
+    place-items: center;
+    font-size: 0.75rem;
+  }
+
+  .step--active .step__num {
+    background: #2563eb;
+  }
+
+  .step--done .step__num {
+    background: #16a34a;
+  }
+
+  .step-sep {
+    flex: 1;
+    height: 1px;
+    background: #e2e8f0;
+    margin: 0 16px;
+  }
+
+  .thanks-empty {
+    max-width: 560px;
+    margin: 40px auto;
+    padding: 40px 28px;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    background: #fff;
+    text-align: center;
+  }
+
+  .thanks-empty__icon {
+    font-size: 3rem;
+    margin-bottom: 8px;
+  }
+
+  .thanks-empty h2 {
+    margin-bottom: 10px;
+    color: #0f172a;
+  }
+
+  .thanks-empty p {
+    margin-bottom: 22px;
+    color: #64748b;
+  }
+
+  .thanks-empty__actions {
+    display: inline-flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .thanks-content {
+    max-width: 860px;
+    margin: 0 auto;
+  }
+
+  .thanks-hero {
+    text-align: center;
+    margin-bottom: 18px;
+  }
+
+  .thanks-hero__icon {
+    font-size: 2.8rem;
+    margin-bottom: 8px;
+  }
+
+  .thanks-hero h1 {
+    margin-bottom: 8px;
+    color: #0f172a;
+  }
+
+  .thanks-hero p {
+    color: #64748b;
+    margin: 0;
+  }
+
+  .thanks-order-id {
+    margin: 0 auto 20px;
+    width: fit-content;
+    background: #eff6ff;
+    color: #1d4ed8;
+    border-radius: 999px;
+    padding: 8px 16px;
+    font-weight: 700;
+  }
+
+  .thanks-card {
+    background: #fff;
+    border-radius: 20px;
+    border: 1px solid #e2e8f0;
+    padding: 26px;
+  }
+
+  .thanks-card h2,
+  .thanks-card h3 {
+    margin: 0 0 14px;
+    color: #0f172a;
+  }
+
+  .thanks-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px 20px;
+  }
+
+  .thanks-field {
+    display: grid;
+    gap: 4px;
+  }
+
+  .thanks-field--full {
+    grid-column: 1 / -1;
+  }
+
+  .thanks-field span {
+    font-size: 0.8rem;
+    color: #64748b;
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+
+  .thanks-field strong {
+    color: #0f172a;
+    word-break: break-word;
+  }
+
+  .status-pill {
+    width: fit-content;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: #fff7ed;
+    color: #c2410c;
+    font-size: 0.84rem;
+  }
+
+  .thanks-divider {
+    margin: 24px 0;
+    border-top: 1px dashed #dbe5f0;
+  }
+
+  .thanks-items {
+    display: grid;
+    gap: 10px;
+  }
+
+  .thanks-item-row {
+    display: grid;
+    grid-template-columns: 52px 1fr auto;
+    gap: 12px;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  .thanks-item-row:last-child {
+    border-bottom: none;
+  }
+
+  .thanks-item-row img {
+    width: 52px;
+    height: 52px;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 1px solid #e2e8f0;
+  }
+
+  .thanks-item-info {
+    min-width: 0;
+  }
+
+  .thanks-item-info strong {
+    display: block;
+    font-size: 0.92rem;
+    color: #0f172a;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .thanks-item-info p {
+    margin: 3px 0 0;
+    color: #64748b;
+    font-size: 0.83rem;
+  }
+
+  .thanks-totals {
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid #f1f5f9;
+    display: grid;
+    gap: 8px;
+  }
+
+  .thanks-total-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.95rem;
+  }
+
+  .thanks-total-row--grand {
+    margin-top: 6px;
+    padding-top: 10px;
+    border-top: 1px dashed #dbe5f0;
+    font-size: 1.2rem;
+    color: #dc2626;
+    font-weight: 800;
+  }
+
+  .thanks-actions {
+    margin-top: 18px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .btn-primary,
+  .btn-outline {
+    min-height: 46px;
+    border-radius: 10px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 16px;
+  }
+
+  .btn-primary {
+    background: #2563eb;
+    color: #fff;
+  }
+
+  .btn-outline {
+    background: #f1f5f9;
+    color: #334155;
+  }
+
+  @media (max-width: 800px) {
+    .thanks-page {
+      padding-bottom: 70px;
+    }
+
+    .thanks-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .thanks-actions {
+      grid-template-columns: 1fr;
+    }
+
+    .thanks-steps {
+      padding: 12px;
+    }
+  }
+</style>

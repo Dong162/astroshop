@@ -1,0 +1,550 @@
+---
+import MainLayout from "../layouts/MainLayout.astro";
+import ProductCard from "../components/ProductCard.astro";
+import { formatCurrency, getProducts } from "../lib/products";
+import {
+  buildAbsoluteUrl,
+  buildOrganizationJsonLd,
+  buildPageTitle,
+  buildWebSiteJsonLd
+} from "../lib/seo";
+
+const products = await getProducts();
+const flashDeals = products.filter((product) => product.flash).slice(0, 8);
+const hotProducts = [...products]
+  .sort((a, b) => Number(b.is_popular) - Number(a.is_popular) || b.id - a.id)
+  .slice(0, 12);
+const heroImage = flashDeals[0]?.images[0]?.src ?? hotProducts[0]?.images[0]?.src;
+const siteUrl = Astro.site?.toString() ?? "https://example.com";
+const title = buildPageTitle("Phụ kiện công nghệ và deal mỗi ngày");
+const description =
+  "Phụ kiện công nghệ, tai nghe, pin sạc, đồ gia dụng thông minh và sản phẩm flash sale – giá tốt nhất, giao hàng toàn quốc.";
+const buildProductUrl = (slug: string) => `/products/${slug}/`;
+const structuredData = [
+  buildWebSiteJsonLd(siteUrl),
+  buildOrganizationJsonLd(siteUrl),
+  {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: "Sản phẩm nổi bật",
+    itemListElement: hotProducts.slice(0, 10).map((product, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: product.name,
+      url: buildAbsoluteUrl(buildProductUrl(product.slug), siteUrl)
+    }))
+  }
+];
+---
+
+<MainLayout
+  title={title}
+  description={description}
+  image={heroImage}
+  structuredData={structuredData}
+>
+  <h1 class="sr-only">Đông Tạp Hóa – Cửa hàng phụ kiện công nghệ và khuyến mãi mỗi ngày</h1>
+
+  <!-- HERO BANNER -->
+  <section class="home-hero">
+    <div class="home-hero__banner">
+      <div class="home-hero__copy">
+        <span class="hero-tag">⚡ Flash Sale mỗi ngày</span>
+        <h2>Phụ kiện <em>Công nghệ</em><br/>Giá cực tốt</h2>
+        <div class="hero-actions">
+          <a href="#flash-sale" class="hero-cta-btn">⚡ Xem Flash Sale</a>
+          <a href="#ban-chay" class="hero-cta-btn hero-cta-btn--ghost">Sản phẩm nổi bật →</a>
+        </div>
+      </div>
+      <div class="home-hero__deco" aria-hidden="true">
+        <div class="deco-circle deco-circle--1"></div>
+        <div class="deco-circle deco-circle--2"></div>
+        <div class="deco-icons">
+          <div class="deco-icon">📱</div>
+          <div class="deco-icon">🎧</div>
+          <div class="deco-icon">🔌</div>
+          <div class="deco-icon">🔋</div>
+          <div class="deco-icon">💻</div>
+          <div class="deco-icon">⌨️</div>
+        </div>
+        <div class="deco-stat">
+          <strong>500+</strong>
+          <span>sản phẩm</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="home-trust-strip">
+      <div class="trust-item">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+        <span>Hàng chính hãng 100%</span>
+      </div>
+      <div class="trust-item">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
+        <span>Giao hàng toàn quốc</span>
+      </div>
+      <div class="trust-item">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 2v6h6"></path><path d="M21 12A9 9 0 0 0 6 5.3L3 8"></path><path d="M21 22v-6h-6"></path><path d="M3 12a9 9 0 0 0 15 6.7l3-2.7"></path></svg>
+        <span>Đổi trả trong 7 ngày</span>
+      </div>
+      <div class="trust-item">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+        <span>Giá tốt nhất thị trường</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLASH SALE -->
+  <section id="flash-sale" class="home-section">
+    <div class="section-head section-head--sale">
+      <div class="section-head__title">
+        <div class="flash-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
+        </div>
+        <h2>FLASH SALE</h2>
+        <span class="sale-live-tag">Đang diễn ra</span>
+      </div>
+      <a href="#ban-chay" class="view-all-link view-all-link--red">Xem tất cả →</a>
+    </div>
+
+    <div class="flash-scroll-wrap">
+      <div class="flash-grid">
+        {flashDeals.map((product) => {
+          const productUrl = buildProductUrl(product.slug);
+          const image = product.images[0]?.src ?? "https://placehold.co/500x500/f3f4f6/111827?text=Flash";
+          const displayPrice = product.sale_price ?? product.regular_price;
+
+          return (
+            <article class="product-card">
+              <a class="product-card__image" href={productUrl}>
+                <img src={image} alt={product.name} loading="lazy" />
+                <div class="product-badge product-badge--red">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                  Flash Sale
+                </div>
+              </a>
+
+              <div class="product-card__body">
+                <div class="rating-line">
+                  <span class="stars">★★★★★</span>
+                  <span class="score">5.0</span>
+                  <span class="rating-count">({(product.id % 5) + 3} đánh giá)</span>
+                </div>
+
+                <h3 class="product-title">
+                  <a href={productUrl}>{product.name}</a>
+                </h3>
+
+                <div class="product-card__footer">
+                  <div class="price-container">
+                    <strong class="price-red">{formatCurrency(displayPrice)}</strong>
+                    {product.sale_price && <s>{formatCurrency(product.regular_price)}</s>}
+                  </div>
+                  
+                  <button
+                    class="cart-add-btn"
+                    type="button"
+                    aria-label={`Thêm ${product.name} vào giỏ hàng`}
+                    title="Thêm vào giỏ"
+                    data-add-to-cart
+                    data-product-id={product.id}
+                    data-product-slug={product.slug}
+                    data-product-name={product.name}
+                    data-product-price={displayPrice}
+                    data-product-regular-price={product.regular_price}
+                    data-product-image={image}
+                    data-product-url={productUrl}
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                  </button>
+                </div>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    </div>
+  </section>
+
+  <!-- HOT PRODUCTS -->
+  <section id="ban-chay" class="home-section">
+    <div class="section-head">
+      <div class="section-head__title">
+        <span class="section-dot"></span>
+        <h2>Sản phẩm nổi bật</h2>
+      </div>
+      <a href="#ban-chay" class="view-all-link">Xem tất cả →</a>
+    </div>
+
+    <div class="products-grid">
+      {hotProducts.map((product) => (
+        <ProductCard product={product} />
+      ))}
+    </div>
+  </section>
+</MainLayout>
+
+<style>
+  /* ── HOME HERO ─────────────────────────────── */
+  .home-hero {
+    margin-bottom: 32px;
+  }
+
+  .home-hero__banner {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 0;
+    background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 55%, #3b82f6 100%);
+    border-radius: 20px;
+    overflow: hidden;
+    min-height: 240px;
+    position: relative;
+  }
+
+  .home-hero__copy {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 14px;
+    padding: 40px 36px;
+    color: #fff;
+    position: relative;
+    z-index: 2;
+  }
+
+  .hero-tag {
+    display: inline-flex;
+    width: fit-content;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.25);
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    backdrop-filter: blur(8px);
+  }
+
+  .home-hero__copy h2 {
+    margin: 0;
+    font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+    line-height: 1.1;
+    font-weight: 800;
+  }
+
+  .home-hero__copy h2 em {
+    font-style: normal;
+    color: #fbbf24;
+  }
+
+  .home-hero__copy p {
+    margin: 0;
+    font-size: 0.92rem;
+    opacity: 0.82;
+    max-width: 420px;
+  }
+
+  .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 4px;
+  }
+
+  .hero-cta-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 12px 24px;
+    background: #fbbf24;
+    color: #1e3a8a;
+    font-weight: 700;
+    font-size: 0.9rem;
+    border-radius: 999px;
+    transition: all 0.25s ease;
+    white-space: nowrap;
+  }
+
+  .hero-cta-btn--ghost {
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.3);
+    backdrop-filter: blur(8px);
+  }
+
+  .hero-cta-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+  }
+
+  .hero-cta-btn--ghost:hover {
+    background: rgba(255,255,255,0.25);
+  }
+
+  /* Decorative right panel */
+  .home-hero__deco {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: rgba(255,255,255,0.06);
+  }
+
+  .deco-circle {
+    position: absolute;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.12);
+  }
+
+  .deco-circle--1 {
+    width: 280px;
+    height: 280px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .deco-circle--2 {
+    width: 180px;
+    height: 180px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255,255,255,0.05);
+  }
+
+  .deco-icons {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    padding: 24px;
+  }
+
+  .deco-icon {
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 14px;
+    font-size: 1.6rem;
+    backdrop-filter: blur(6px);
+    transition: transform 0.3s ease;
+  }
+
+  .deco-icon:hover {
+    transform: scale(1.1) rotate(3deg);
+  }
+
+  .deco-stat {
+    position: absolute;
+    bottom: 18px;
+    right: 18px;
+    background: rgba(251,191,36,0.9);
+    color: #1e3a8a;
+    border-radius: 12px;
+    padding: 8px 14px;
+    text-align: center;
+    backdrop-filter: blur(8px);
+  }
+
+  .deco-stat strong {
+    display: block;
+    font-size: 1.4rem;
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  .deco-stat span {
+    font-size: 0.72rem;
+    font-weight: 600;
+  }
+
+  .home-trust-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-top: 14px;
+  }
+
+  .trust-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    font-size: 0.84rem;
+    font-weight: 500;
+    color: var(--text);
+    box-shadow: var(--shadow);
+  }
+
+  .trust-item svg {
+    flex-shrink: 0;
+    color: var(--primary);
+  }
+
+  /* ── SECTIONS ──────────────────────────────── */
+  .home-section {
+    margin-bottom: 36px;
+  }
+
+  .section-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+  }
+
+  .section-head__title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-head__title h2 {
+    margin: 0;
+    font-size: clamp(1.15rem, 3vw, 1.45rem);
+    font-weight: 700;
+  }
+
+  .section-dot {
+    display: block;
+    width: 4px;
+    height: 22px;
+    border-radius: 4px;
+    background: linear-gradient(180deg, var(--primary), var(--primary-dark));
+    flex-shrink: 0;
+  }
+
+  .section-head--sale .section-head__title h2 {
+    color: #dc2626;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+
+  .flash-icon {
+    width: 30px;
+    height: 30px;
+    background: #ea580c;
+    color: #fff;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+
+  .sale-live-tag {
+    display: inline-flex;
+    padding: 3px 10px;
+    background: #fee2e2;
+    color: #dc2626;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  .view-all-link {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--primary);
+    transition: all 0.2s;
+  }
+
+  .view-all-link:hover {
+    color: var(--primary-dark);
+  }
+
+  .view-all-link--red {
+    color: #dc2626;
+  }
+
+  .view-all-link--red:hover {
+    color: #b91c1c;
+  }
+
+  /* Flash scroll on mobile */
+  .flash-scroll-wrap {
+    overflow: hidden;
+  }
+
+  .flash-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  /* ── RESPONSIVE ────────────────────────────── */
+  @media (max-width: 1024px) {
+    .flash-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .home-trust-strip {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 768px) {
+    .home-hero__banner {
+      grid-template-columns: 1fr;
+      min-height: auto;
+    }
+
+    .home-hero__visual {
+      display: none;
+    }
+
+    .home-hero__copy {
+      padding: 28px 24px;
+      gap: 12px;
+    }
+
+    .home-trust-strip {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    .trust-item {
+      padding: 10px 12px;
+      font-size: 0.8rem;
+      gap: 8px;
+    }
+
+    .flash-scroll-wrap {
+      overflow-x: auto;
+      margin: 0 -12px;
+      padding: 0 12px;
+      scrollbar-width: none;
+    }
+
+    .flash-scroll-wrap::-webkit-scrollbar {
+      display: none;
+    }
+
+    .flash-grid {
+      display: flex;
+      gap: 12px;
+      padding-bottom: 4px;
+    }
+
+    .flash-grid > * {
+      flex: 0 0 calc(50vw - 28px);
+      max-width: 220px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .home-trust-strip {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .flash-grid > * {
+      flex: 0 0 calc(55vw - 28px);
+    }
+  }
+</style>

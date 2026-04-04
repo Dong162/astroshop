@@ -1,0 +1,343 @@
+---
+import "../styles/global.css";
+import { buildAbsoluteUrl, buildSeoDescription, SITE_NAME } from "../lib/seo";
+
+interface Props {
+  title: string;
+  description?: string;
+  image?: string;
+  type?: "website" | "product";
+  noindex?: boolean;
+  structuredData?: Record<string, unknown> | Array<Record<string, unknown>>;
+}
+
+const {
+  title,
+  description = "Cửa hàng phụ kiện công nghệ, deal mỗi ngày và trang sản phẩm render sẵn cho SEO.",
+  image,
+  type = "website",
+  noindex = false,
+  structuredData = []
+} = Astro.props;
+
+const siteUrl = Astro.site?.toString() ?? "https://example.com";
+const pathname = Astro.url.pathname || "/";
+const canonicalUrl = buildAbsoluteUrl(pathname, siteUrl);
+const imageUrl = image ? buildAbsoluteUrl(image, siteUrl) : undefined;
+const metaDescription = buildSeoDescription(description, 155);
+const robots = noindex ? "noindex, nofollow" : "index, follow, max-image-preview:large";
+const schemaList = Array.isArray(structuredData)
+  ? structuredData.filter(Boolean)
+  : structuredData
+    ? [structuredData]
+    : [];
+const isHomePage = pathname === "/";
+const sectionLink = (hash: string) => (isHomePage ? hash : `/${hash}`);
+---
+
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <meta name="description" content={metaDescription} />
+    <meta name="robots" content={robots} />
+    <link rel="canonical" href={canonicalUrl} />
+    <link rel="alternate" hreflang="vi-VN" href={canonicalUrl} />
+    <meta property="og:locale" content="vi_VN" />
+    <meta property="og:site_name" content={SITE_NAME} />
+    <meta property="og:type" content={type} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={metaDescription} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta name="twitter:card" content={imageUrl ? "summary_large_image" : "summary"} />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={metaDescription} />
+    <meta name="theme-color" content="#1d4ed8" />
+    {imageUrl && <meta property="og:image" content={imageUrl} />}
+    {imageUrl && <meta property="og:image:alt" content={title} />}
+    {imageUrl && <meta name="twitter:image" content={imageUrl} />}
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    {schemaList.map((schema) => (
+      <script is:inline type="application/ld+json" set:html={JSON.stringify(schema)} />
+    ))}
+  </head>
+  <body>
+    <!-- Utility bar -->
+    <div class="utility-bar">
+      <div class="container utility-bar__inner">
+        <div class="utility-bar__left">
+          <span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.68A2 2 0 012 .83h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"></path></svg>
+            Hotline: <strong>0911 311 139</strong>
+          </span>
+          <span class="utility-sep">|</span>
+          <span>Giao hàng toàn quốc</span>
+        </div>
+        <div class="utility-bar__right">
+          <span>Đổi trả 7 ngày</span>
+          <span class="utility-sep">|</span>
+          <a href="/cart">Giỏ hàng</a>
+        </div>
+      </div>
+    </div>
+
+    <header class="site-header">
+      <div class="container site-header__main">
+        <a href="/" class="brand">
+          <span class="brand__mark">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="currentColor"/></svg>
+          </span>
+          <div class="brand__text">
+            <strong>Đông Tạp Hóa</strong>
+            <span class="brand__tagline">Giá tốt mỗi ngày</span>
+          </div>
+        </a>
+
+        <form class="search-box" action="/search" method="get" role="search" aria-label="Tìm kiếm sản phẩm">
+          <input type="search" name="q" placeholder="Tìm sản phẩm, phụ kiện công nghệ..." autocomplete="off" />
+          <button type="submit" aria-label="Tìm kiếm">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          </button>
+        </form>
+
+        <div class="header-actions">
+          <button type="button" class="mobile-search-btn" aria-label="Mở tìm kiếm">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          </button>
+
+          <nav class="main-nav" aria-label="Điều hướng chính">
+            <a href="/">Trang chủ</a>
+            <a href={sectionLink("#ban-chay")}>Sản phẩm</a>
+            <a href={sectionLink("#flash-sale")}>Khuyến mãi</a>
+          </nav>
+
+          <a href="/cart" class="cart-btn" aria-label="Giỏ hàng">
+            <span class="cart-btn__icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+            </span>
+            <span class="cart-count-badge" data-cart-count hidden>0</span>
+          </a>
+
+          <button type="button" class="mobile-menu-btn" aria-label="Menu">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Mobile search dropdown -->
+      <div class="mobile-search-panel" id="mobile-search-panel">
+        <div class="container">
+          <form action="/search" method="get" role="search">
+            <div class="mobile-search-inner">
+              <input type="search" name="q" placeholder="Tìm sản phẩm..." autocomplete="off" id="mobile-search-input" />
+              <button type="submit" aria-label="Tìm kiếm">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Mobile nav dropdown -->
+      <div class="mobile-nav-panel" id="mobile-nav-panel">
+        <div class="container">
+          <nav>
+            <a href="/">🏠 Trang chủ</a>
+            <a href={sectionLink("#ban-chay")}>📦 Sản phẩm</a>
+            <a href={sectionLink("#flash-sale")}>⚡ Khuyến mãi</a>
+            <a href="/cart">🛒 Giỏ hàng</a>
+          </nav>
+        </div>
+      </div>
+    </header>
+
+    <main class="container main-shell">
+      <slot />
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <div class="site-footer__grid">
+          <div class="footer-brand-col">
+            <div class="footer-brand">
+              <span class="brand__mark brand__mark--sm">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="currentColor"/></svg>
+              </span>
+              <strong>Đông Tạp Hóa</strong>
+            </div>
+            <p>Cửa hàng phụ kiện công nghệ – giá tốt, uy tín, giao hàng toàn quốc.</p>
+            <div class="footer-trust">
+              <span>✓ Hàng chính hãng</span>
+              <span>✓ Đổi trả 7 ngày</span>
+              <span>✓ Bảo hành uy tín</span>
+            </div>
+          </div>
+          <div>
+            <h3>Danh mục</h3>
+            <a href="/">Trang chủ</a>
+            <a href={sectionLink("#flash-sale")}>Flash Sale</a>
+            <a href={sectionLink("#ban-chay")}>Bán chạy nhất</a>
+          </div>
+          <div>
+            <h3>Liên hệ</h3>
+            <p>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.68A2 2 0 012 .83h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"></path></svg>
+              Hotline: <strong>0911 311 139</strong>
+            </p>
+            <p>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+              Email: lienhe@dongtaphoa.vn
+            </p>
+            <p>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              Làm việc: 8:00 – 21:00 mỗi ngày
+            </p>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <p>© 2025 Đông Tạp Hóa. Thiết kế với ❤️ cho người Việt Nam.</p>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Sticky Contact Buttons (hidden on admin pages) -->
+    {!pathname.startsWith("/admin") && (
+      <div class="sticky-contacts" id="sticky-contacts" aria-label="Liên hệ nhanh">
+        <a
+          href="https://zalo.me/0911311139"
+          class="sticky-btn sticky-btn--zalo"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Chat Zalo"
+          title="Chat Zalo"
+        >
+          <!-- Zalo SVG icon -->
+          <svg width="26" height="26" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="48" height="48" rx="12" fill="#0068FF"/>
+            <path d="M24 8C15.163 8 8 15.163 8 24c0 3.428.994 6.624 2.706 9.308L8 40l7.02-2.63A15.93 15.93 0 0 0 24 40c8.837 0 16-7.163 16-16S32.837 8 24 8z" fill="white"/>
+            <path d="M16 20h8l-8 8h9" stroke="#0068FF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M29 20v8" stroke="#0068FF" stroke-width="2.2" stroke-linecap="round"/>
+            <circle cx="29" cy="18.5" r="1.2" fill="#0068FF"/>
+          </svg>
+          <span class="sticky-btn__label">Zalo</span>
+        </a>
+
+        <a
+          href="https://m.me/dongtaphoa"
+          class="sticky-btn sticky-btn--messenger"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Chat Messenger"
+          title="Chat Messenger"
+        >
+          <!-- Messenger icon -->
+          <svg width="26" height="26" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="48" height="48" rx="12" fill="url(#msng_grad)"/>
+            <defs>
+              <linearGradient id="msng_grad" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#00B2FF"/>
+                <stop offset="100%" stop-color="#006AFF"/>
+              </linearGradient>
+            </defs>
+            <path d="M24 9C15.716 9 9 15.28 9 23c0 4.26 1.91 8.07 4.95 10.7V39l5.7-3.14C21.05 36.24 22.5 36.5 24 36.5c8.284 0 15-6.28 15-13.5S32.284 9 24 9z" fill="white"/>
+            <path d="M13.5 26.5l5.5-6 3.5 3.5 5-3.5-5.5 6-3.5-3.5-5 3.5z" fill="url(#msng_grad)"/>
+          </svg>
+          <span class="sticky-btn__label">Messenger</span>
+        </a>
+
+        <a
+          href="https://www.facebook.com/dongtaphoa"
+          class="sticky-btn sticky-btn--facebook"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Fanpage Facebook"
+          title="Fanpage Facebook"
+        >
+          <!-- Facebook icon -->
+          <svg width="26" height="26" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="48" height="48" rx="12" fill="#1877F2"/>
+            <path d="M33 8h-4a8 8 0 0 0-8 8v4h-4v6h4v14h6V26h4l1-6h-5v-4a2 2 0 0 1 2-2h3V8z" fill="white"/>
+          </svg>
+          <span class="sticky-btn__label">Fanpage</span>
+        </a>
+
+        <button
+          type="button"
+          class="sticky-btn sticky-btn--phone"
+          onclick="window.location.href='tel:0911311139'"
+          aria-label="Gọi điện"
+          title="Gọi ngay: 0911 311 139"
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 3.07 9.81a19.79 19.79 0 0 1-3.07-8.68A2 2 0 0 1 2 .83h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L6.09 8.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+          </svg>
+          <span class="sticky-btn__label">Gọi ngay</span>
+        </button>
+      </div>
+    )}
+
+    <script>
+      import { initCartUi } from "../scripts/cart";
+      initCartUi();
+
+      // Mobile search panel
+      const searchBtn = document.querySelector(".mobile-search-btn") as HTMLButtonElement | null;
+      const searchPanel = document.getElementById("mobile-search-panel");
+      const navPanel = document.getElementById("mobile-nav-panel");
+      const menuBtn = document.querySelector(".mobile-menu-btn") as HTMLButtonElement | null;
+
+      // Pre-fill search inputs if query param present
+      const searchParams = new URLSearchParams(window.location.search);
+      const currentQuery = (searchParams.get("q") ?? "").trim();
+      document.querySelectorAll("input[name='q']").forEach((input) => {
+        if (currentQuery) (input as HTMLInputElement).value = currentQuery;
+      });
+
+      if (searchBtn && searchPanel) {
+        searchBtn.addEventListener("click", () => {
+          const isOpen = searchPanel.classList.toggle("is-open");
+          navPanel?.classList.remove("is-open");
+          if (isOpen) {
+            const inp = document.getElementById("mobile-search-input") as HTMLInputElement | null;
+            inp?.focus();
+          }
+        });
+      }
+
+      if (menuBtn && navPanel) {
+        menuBtn.addEventListener("click", () => {
+          navPanel.classList.toggle("is-open");
+          searchPanel?.classList.remove("is-open");
+        });
+      }
+
+      // Close panels on outside click
+      document.addEventListener("click", (e) => {
+        const target = e.target as HTMLElement;
+        if (!target.closest(".site-header")) {
+          searchPanel?.classList.remove("is-open");
+          navPanel?.classList.remove("is-open");
+        }
+      });
+
+      // Validate search forms
+      document.querySelectorAll("form[role='search']").forEach((form) => {
+        form.addEventListener("submit", (event) => {
+          const input = form.querySelector("input[name='q']") as HTMLInputElement | null;
+          if (!input || !input.value.trim()) {
+            event.preventDefault();
+            return;
+          }
+          input.value = input.value.trim();
+        });
+      });
+    </script>
+  </body>
+</html>

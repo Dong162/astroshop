@@ -1,0 +1,779 @@
+﻿---
+import MainLayout from "../layouts/MainLayout.astro";
+import { buildPageTitle } from "../lib/seo";
+
+const title = buildPageTitle("Thanh toán");
+const description = "Đặt hàng và thanh toán đơn hàng tại Đông Tạp Hóa - nhanh chóng, bảo mật.";
+const shippingFee = 25000;
+---
+
+<MainLayout title={title} description={description} noindex>
+  <section class="payment-page" data-payment-page data-shipping-fee={shippingFee}>
+    
+
+    <div class="payment-empty" data-payment-empty hidden>
+      <div class="payment-empty__icon">🛒</div>
+      <h2>Chưa có sản phẩm để thanh toán</h2>
+      <p>Giỏ hàng đang trống. Hãy thêm sản phẩm trước khi đặt hàng.</p>
+      <a href="/cart" class="btn-payment-back">← Quay lại giỏ hàng</a>
+    </div>
+
+    <div class="payment-layout" data-payment-layout hidden>
+      <div class="payment-left">
+        <form class="payment-form" data-payment-form novalidate>
+          <div class="form-section">
+            <h2 class="form-section__title">
+              <span class="form-section__num">1</span>
+              Thông tin nhận hàng
+            </h2>
+
+            <div class="form-grid">
+              <label class="form-field">
+                <span class="form-label">Họ và tên <em>*</em></span>
+                <input type="text" name="fullName" autocomplete="name" placeholder="Nguyễn Văn A" required />
+              </label>
+
+              <label class="form-field">
+                <span class="form-label">Số điện thoại <em>*</em></span>
+                <input type="tel" name="phone" autocomplete="tel" placeholder="09xx xxx xxx" required />
+              </label>
+
+              <label class="form-field">
+                <span class="form-label">Email <em>*</em></span>
+                <input type="email" name="email" autocomplete="email" placeholder="email@example.com" required />
+              </label>
+
+              <label class="form-field">
+                <span class="form-label">Địa chỉ nhận hàng <em>*</em></span>
+                <input
+                  type="text"
+                  name="address"
+                  autocomplete="street-address"
+                  placeholder="Số nhà, đường, quận/huyện, tỉnh/thành"
+                  required
+                />
+              </label>
+
+              <label class="form-field form-field--full">
+                <span class="form-label">Ghi chú đơn hàng</span>
+                <textarea name="note" rows="3" placeholder="Ví dụ: Giao giờ hành chính, gọi trước khi giao..."></textarea>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h2 class="form-section__title">
+              <span class="form-section__num">2</span>
+              Phương thức thanh toán
+            </h2>
+
+            <div class="payment-methods">
+              <label class="payment-method-option">
+                <input type="radio" name="method" value="cod" checked />
+                <div class="payment-method-card">
+                  <div class="payment-method-card__icon">💵</div>
+                  <div>
+                    <strong>Thanh toán khi nhận hàng (COD)</strong>
+                    <p>Trả tiền mặt khi nhận hàng - không phí phụ thu</p>
+                  </div>
+                </div>
+              </label>
+
+              <label class="payment-method-option">
+                <input type="radio" name="method" value="bank" />
+                <div class="payment-method-card">
+                  <div class="payment-method-card__icon">🏦</div>
+                  <div>
+                    <strong>Chuyển khoản ngân hàng</strong>
+                    <p>Thông tin tài khoản sẽ được gửi qua email sau khi đặt hàng</p>
+                  </div>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <p class="payment-error" data-payment-error hidden></p>
+
+          <button type="submit" class="payment-submit" data-payment-submit>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+            Xác nhận đặt hàng
+          </button>
+
+          <p class="payment-secure-note">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            Thông tin của bạn được mã hóa và bảo mật hoàn toàn
+          </p>
+        </form>
+      </div>
+
+      <aside class="payment-summary" aria-label="Tóm tắt đơn hàng">
+        <div class="payment-summary__inner">
+          <h2>Đơn hàng của bạn</h2>
+          <p class="payment-summary__count" data-payment-count></p>
+
+          <div class="payment-items" data-payment-items></div>
+
+          <div class="payment-summary__rows">
+            <div class="payment-summary__row">
+              <span>Tạm tính</span>
+              <strong data-payment-subtotal></strong>
+            </div>
+            <div class="payment-summary__row">
+              <span>Phí vận chuyển</span>
+              <strong data-payment-shipping></strong>
+            </div>
+            <div class="payment-summary__row payment-summary__total-row">
+              <span>Tổng cộng</span>
+              <strong data-payment-total></strong>
+            </div>
+          </div>
+
+          <div class="payment-commits">
+            <div>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+              Hàng chính hãng 100%
+            </div>
+            <div>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
+              Giao hàng toàn quốc
+            </div>
+            <div>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 2v6h6"></path><path d="M21 12A9 9 0 0 0 6 5.3L3 8"></path><path d="M21 22v-6h-6"></path><path d="M3 12a9 9 0 0 0 15 6.7l3-2.7"></path></svg>
+              Đổi trả trong 7 ngày
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <div class="payment-mobile-bar" data-payment-mobile-bar hidden>
+      <div class="payment-mobile-bar__total">
+        <span>Tổng cộng</span>
+        <strong data-payment-mobile-total></strong>
+      </div>
+      <button type="button" class="payment-mobile-bar__btn" data-payment-submit-mobile disabled>
+        Đặt hàng →
+      </button>
+    </div>
+
+    <template data-payment-item-template>
+      <article class="payment-item">
+        <img data-payment-item-image alt="" />
+        <div class="payment-item__info">
+          <h3 data-payment-item-name></h3>
+          <p><span data-payment-item-quantity></span> × <span data-payment-item-price></span></p>
+        </div>
+        <strong data-payment-item-total></strong>
+      </article>
+    </template>
+  </section>
+</MainLayout>
+
+<script>
+  import { formatCartCurrency, getCartCount, readCart, subscribeCartUpdates, writeCart } from "../scripts/cart";
+  import type { CartItem } from "../scripts/cart";
+
+  interface FormValues {
+    fullName: string;
+    phone: string;
+    email: string;
+    address: string;
+    note: string;
+    method: string;
+  }
+
+  interface OrderPayload {
+    customer_name: string;
+    customer_phone: string;
+    customer_email: string;
+    shipping_address: string;
+    note: string;
+    payment_method: string;
+    status: string;
+    item_count: number;
+    subtotal: number;
+    shipping_fee: number;
+    total: number;
+    items: Array<{ name: string; price: number; quantity: number; image: string }>;
+  }
+
+  interface LastOrderSnapshot {
+    orderId: string;
+    fullName: string;
+    phone: string;
+    email: string;
+    address: string;
+    note: string;
+    method: string;
+    status: string;
+    subtotal: number;
+    shippingFee: number;
+    total: number;
+    itemCount: number;
+    createdAt: string;
+    items: Array<{ name: string; price: number; quantity: number; image: string }>;
+  }
+
+  const LAST_ORDER_STORAGE_KEY = "astro-shop-last-order";
+  const paymentPage = document.querySelector<HTMLElement>("[data-payment-page]");
+  const supabaseUrl = (import.meta.env.PUBLIC_SUPABASE_URL ?? "").trim();
+  const supabaseKey = (import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? "").trim();
+  const configuredOrdersTable = (import.meta.env.PUBLIC_SUPABASE_ORDERS_TABLE ?? "").trim();
+  const ordersTable = configuredOrdersTable || "astro_orders";
+
+
+  if (paymentPage) {
+    const shippingBase = Number(paymentPage.dataset.shippingFee ?? 0);
+    const layout = paymentPage.querySelector<HTMLElement>("[data-payment-layout]");
+    const emptyState = paymentPage.querySelector<HTMLElement>("[data-payment-empty]");
+    const form = paymentPage.querySelector<HTMLFormElement>("[data-payment-form]");
+    const submitButton = paymentPage.querySelector<HTMLButtonElement>("[data-payment-submit]");
+    const errorNode = paymentPage.querySelector<HTMLElement>("[data-payment-error]");
+    const itemsContainer = paymentPage.querySelector<HTMLElement>("[data-payment-items]");
+    const itemTemplate = paymentPage.querySelector<HTMLTemplateElement>("template[data-payment-item-template]");
+    const subtotalNode = paymentPage.querySelector<HTMLElement>("[data-payment-subtotal]");
+    const shippingNode = paymentPage.querySelector<HTMLElement>("[data-payment-shipping]");
+    const totalNode = paymentPage.querySelector<HTMLElement>("[data-payment-total]");
+    const mobileBar = paymentPage.querySelector<HTMLElement>("[data-payment-mobile-bar]");
+    const mobileTotal = paymentPage.querySelector<HTMLElement>("[data-payment-mobile-total]");
+    const mobileSubmit = paymentPage.querySelector<HTMLButtonElement>("[data-payment-submit-mobile]");
+    const countNode = paymentPage.querySelector<HTMLElement>("[data-payment-count]");
+
+    const setError = (message: string | null) => {
+      if (!errorNode) return;
+      if (!message) {
+        errorNode.hidden = true;
+        errorNode.textContent = "";
+        return;
+      }
+      errorNode.textContent = message;
+      errorNode.hidden = false;
+    };
+
+    const saveOrderSnapshot = (snapshot: LastOrderSnapshot) => {
+      try {
+        window.sessionStorage.setItem(LAST_ORDER_STORAGE_KEY, JSON.stringify(snapshot));
+      } catch {
+        // Keep checkout flow running even if storage is unavailable.
+      }
+    };
+
+    const renderPayment = (items: CartItem[] = readCart()) => {
+      const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+      const shipping = items.length > 0 ? shippingBase : 0;
+      const total = subtotal + shipping;
+
+      if (layout) layout.hidden = items.length === 0;
+      if (emptyState) emptyState.hidden = items.length > 0;
+      if (countNode) countNode.textContent = `${getCartCount(items)} sản phẩm`;
+      if (subtotalNode) subtotalNode.textContent = formatCartCurrency(subtotal);
+      if (shippingNode) shippingNode.textContent = formatCartCurrency(shipping);
+      if (totalNode) totalNode.textContent = formatCartCurrency(total);
+      if (mobileTotal) mobileTotal.textContent = formatCartCurrency(total);
+      if (mobileBar) mobileBar.hidden = items.length === 0;
+      if (mobileSubmit) mobileSubmit.disabled = items.length === 0;
+
+      if (itemsContainer && itemTemplate) {
+        itemsContainer.replaceChildren();
+        items.forEach((item) => {
+          const fragment = itemTemplate.content.cloneNode(true) as DocumentFragment;
+          const imageNode = fragment.querySelector<HTMLImageElement>("[data-payment-item-image]");
+          const nameNode = fragment.querySelector<HTMLElement>("[data-payment-item-name]");
+          const quantityNode = fragment.querySelector<HTMLElement>("[data-payment-item-quantity]");
+          const priceNode = fragment.querySelector<HTMLElement>("[data-payment-item-price]");
+          const totalNodeItem = fragment.querySelector<HTMLElement>("[data-payment-item-total]");
+
+          if (imageNode) {
+            imageNode.src = item.image;
+            imageNode.alt = item.name;
+          }
+          if (nameNode) nameNode.textContent = item.name;
+          if (quantityNode) quantityNode.textContent = item.quantity.toString();
+          if (priceNode) priceNode.textContent = formatCartCurrency(item.price);
+          if (totalNodeItem) totalNodeItem.textContent = formatCartCurrency(item.price * item.quantity);
+
+          itemsContainer.append(fragment);
+        });
+      }
+    };
+
+    form?.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      setError(null);
+
+      const items = readCart();
+      if (!items.length) {
+        renderPayment(items);
+        return;
+      }
+
+      const formData = new FormData(form);
+      const values: FormValues = {
+        fullName: String(formData.get("fullName") || "").trim(),
+        phone: String(formData.get("phone") || "").trim(),
+        email: String(formData.get("email") || "").trim(),
+        address: String(formData.get("address") || "").trim(),
+        note: String(formData.get("note") || "").trim(),
+        method: String(formData.get("method") || "cod")
+      };
+
+      if (!values.fullName || !values.phone || !values.email || !values.address) {
+        setError("Vui lòng điền đầy đủ thông tin bắt buộc.");
+        return;
+      }
+
+      const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+      const itemCount = getCartCount(items);
+      const total = subtotal + shippingBase;
+
+      const payload: OrderPayload = {
+        customer_name: values.fullName,
+        customer_phone: values.phone,
+        customer_email: values.email,
+        shipping_address: values.address,
+        note: values.note,
+        payment_method: values.method,
+        status: "pending",
+        item_count: itemCount,
+        subtotal,
+        shipping_fee: shippingBase,
+        total,
+        items: items.map((item) => ({
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          image: item.image
+        }))
+      };
+
+      if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.textContent = "Đang xử lý...";
+      }
+      if (mobileSubmit) {
+        mobileSubmit.disabled = true;
+        mobileSubmit.textContent = "Đang xử lý...";
+      }
+
+      try {
+        const response = await fetch(`${supabaseUrl}/rest/v1/${ordersTable}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: supabaseKey,
+            Authorization: `Bearer ${supabaseKey}`,
+            Prefer: "return=representation"
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+          throw new Error("Save order failed");
+        }
+
+        const result = await response.json();
+        const orderId = String(result?.[0]?.id ?? Date.now());
+
+        const snapshot: LastOrderSnapshot = {
+          orderId,
+          fullName: values.fullName,
+          phone: values.phone,
+          email: values.email,
+          address: values.address,
+          note: values.note,
+          method: values.method,
+          status: "pending",
+          subtotal,
+          shippingFee: shippingBase,
+          total,
+          itemCount,
+          createdAt: new Date().toISOString(),
+          items: items.map((item) => ({
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+            image: item.image
+          }))
+        };
+
+        saveOrderSnapshot(snapshot);
+        writeCart([]);
+        window.location.href = `/thank-you?order=${encodeURIComponent(orderId)}`;
+      } catch {
+        setError("Lỗi hệ thống, vui lòng thử lại.");
+        if (submitButton) {
+          submitButton.disabled = false;
+          submitButton.textContent = "Xác nhận đặt hàng";
+        }
+        if (mobileSubmit) {
+          mobileSubmit.disabled = false;
+          mobileSubmit.textContent = "Đặt hàng →";
+        }
+      }
+    });
+
+    mobileSubmit?.addEventListener("click", () => {
+      if (mobileSubmit.disabled) return;
+      form?.requestSubmit();
+    });
+
+    subscribeCartUpdates(renderPayment);
+    renderPayment();
+  }
+</script>
+
+<style>
+  .payment-page {
+    padding: 40px 0 90px;
+    min-height: 80vh;
+  }
+
+  .payment-steps {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 32px;
+    background: #fff;
+    padding: 16px 24px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+  }
+
+  .step {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    color: #94a3b8;
+  }
+
+  .step--active {
+    color: #2563eb;
+  }
+
+  .step--done {
+    color: #16a34a;
+  }
+
+  .step__num {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #e2e8f0;
+    color: #fff;
+    display: grid;
+    place-items: center;
+    font-size: 0.75rem;
+  }
+
+  .step--active .step__num {
+    background: #2563eb;
+  }
+
+  .step--done .step__num {
+    background: #16a34a;
+  }
+
+  .step-sep {
+    flex: 1;
+    height: 1px;
+    background: #e2e8f0;
+    margin: 0 16px;
+  }
+
+  .payment-empty {
+    max-width: 520px;
+    margin: 40px auto;
+    padding: 40px 28px;
+    border-radius: 18px;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    text-align: center;
+  }
+
+  .payment-empty__icon {
+    font-size: 3rem;
+    margin-bottom: 10px;
+  }
+
+  .payment-empty h2 {
+    margin-bottom: 10px;
+    color: #0f172a;
+  }
+
+  .payment-empty p {
+    color: #64748b;
+    margin-bottom: 24px;
+  }
+
+  .btn-payment-back {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 18px;
+    border-radius: 10px;
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-weight: 700;
+  }
+
+  .payment-layout {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 24px;
+  }
+
+  .form-section {
+    background: #fff;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+
+  .form-section__title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.1rem;
+    margin-bottom: 20px;
+  }
+
+  .form-section__num {
+    width: 26px;
+    height: 26px;
+    background: #2563eb;
+    color: #fff;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-size: 0.8rem;
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .form-field--full {
+    grid-column: 1 / -1;
+  }
+
+  .form-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  .payment-form input,
+  .payment-form textarea {
+    padding: 10px 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.9rem;
+  }
+
+  .payment-methods {
+    display: grid;
+    gap: 12px;
+  }
+
+  .payment-method-option input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .payment-method-card {
+    display: flex;
+    gap: 12px;
+    padding: 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+
+  .payment-method-option input:checked + .payment-method-card {
+    border-color: #2563eb;
+    background: #eff6ff;
+  }
+
+  .payment-submit {
+    width: 100%;
+    height: 50px;
+    background: #16a34a;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-weight: 700;
+    margin-top: 10px;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .payment-error {
+    color: #dc2626;
+    font-weight: 600;
+    margin-top: 10px;
+  }
+
+  .payment-secure-note {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #166534;
+    margin-top: 12px;
+    font-size: 0.85rem;
+  }
+
+  .payment-summary__inner {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 20px;
+    position: sticky;
+    top: 100px;
+  }
+
+  .payment-summary__count {
+    color: #64748b;
+    font-size: 0.9rem;
+    margin-bottom: 12px;
+  }
+
+  .payment-items {
+    margin: 16px 0;
+    border-bottom: 1px solid #f1f5f9;
+    padding-bottom: 16px;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
+  .payment-item {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .payment-item img {
+    width: 44px;
+    height: 44px;
+    border-radius: 6px;
+    object-fit: cover;
+  }
+
+  .payment-item__info {
+    flex: 1;
+  }
+
+  .payment-item__info h3 {
+    font-size: 0.8rem;
+    margin: 0;
+  }
+
+  .payment-item__info p {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin: 2px 0 0;
+  }
+
+  .payment-summary__row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    margin-bottom: 8px;
+  }
+
+  .payment-summary__total-row {
+    border-top: 1px dashed #e2e8f0;
+    padding-top: 12px;
+    font-weight: 700;
+    font-size: 1.1rem;
+  }
+
+  .payment-commits {
+    margin-top: 16px;
+    font-size: 0.75rem;
+    color: #166534;
+    background: #f0fdf4;
+    padding: 12px;
+    border-radius: 8px;
+    display: grid;
+    gap: 6px;
+  }
+
+  .payment-commits > div {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .payment-mobile-bar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 30;
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 18px calc(12px + env(safe-area-inset-bottom));
+    background: rgba(255, 255, 255, 0.95);
+    border-top: 1px solid #e2e8f0;
+    backdrop-filter: blur(6px);
+  }
+
+  .payment-mobile-bar__total span {
+    display: block;
+    font-size: 0.78rem;
+    color: #64748b;
+  }
+
+  .payment-mobile-bar__total strong {
+    font-size: 1.05rem;
+    color: #0f172a;
+  }
+
+  .payment-mobile-bar__btn {
+    min-width: 130px;
+    height: 44px;
+    border-radius: 10px;
+    border: none;
+    background: #16a34a;
+    color: #fff;
+    font-weight: 700;
+  }
+
+  .payment-mobile-bar__btn:disabled {
+    opacity: 0.5;
+  }
+
+  @media (max-width: 800px) {
+    .payment-page {
+      padding-bottom: 110px;
+    }
+
+    .payment-layout {
+      grid-template-columns: 1fr;
+    }
+
+    .form-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .payment-mobile-bar {
+      display: flex;
+    }
+  }
+</style>
+
