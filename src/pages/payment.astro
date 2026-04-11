@@ -39,8 +39,8 @@ const shippingFee = 25000;
               </label>
 
               <label class="form-field">
-                <span class="form-label">Email <em>*</em></span>
-                <input type="email" name="email" autocomplete="email" placeholder="email@example.com" required />
+                <span class="form-label">Email</span>
+                <input type="email" name="email" autocomplete="email" placeholder="email@example.com" />
               </label>
 
               <label class="form-field">
@@ -95,7 +95,7 @@ const shippingFee = 25000;
           <p class="payment-error" data-payment-error hidden></p>
 
           <div class="desktop-notice" style="margin-bottom: 16px; padding: 12px; background: #fee2e2; color: #dc2626; border-radius: 8px; text-align: center; font-weight: 700; font-size: 0.85rem;">
-            ⚠️ VUI LÒNG QUAY VIDEO LÚC MỞ HÀNG ĐỂ GIẢI QUYẾT KHIẾU NẠI NẾU CÓ
+            ⚠️ QUÝ KHÁCH VUI LÒNG QUAY VIDEO KHI MỞ HÀNG ĐỂ ĐƯỢC HỖ TRỢ KHIẾU NẠI NẾU CÓ
           </div>
 
           <button type="submit" class="payment-submit" data-payment-submit>
@@ -164,7 +164,7 @@ const shippingFee = 25000;
 
     <div class="payment-mobile-bar" data-payment-mobile-bar hidden style="flex-direction: column; align-items: stretch; gap: 6px; padding: 8px 18px calc(8px + env(safe-area-inset-bottom));">
       <div style="text-align: center; color: #dc2626; font-size: 0.7rem; font-weight: 700; background: #fee2e2; padding: 4px 8px; border-radius: 6px; line-height: 1.2;">
-        ⚠️ VUI LÒNG QUAY VIDEO LÚC MỞ HÀNG ĐỂ GIẢI QUYẾT KHIẾU NẠI NẾU CÓ
+        ⚠️ QUÝ KHÁCH VUI LÒNG QUAY VIDEO KHI MỞ HÀNG ĐỂ ĐƯỢC HỖ TRỢ KHIẾU NẠI NẾU CÓ
       </div>
       <div style="display: flex; justify-content: space-between; align-items: center;">
         <div class="payment-mobile-bar__total">
@@ -438,8 +438,8 @@ const shippingFee = 25000;
         method: String(formData.get("method") || "cod")
       };
 
-      if (!values.fullName || !values.phone || !values.email || !values.address) {
-        setError("Vui lòng điền đầy đủ thông tin bắt buộc.");
+      if (!values.fullName || !values.phone || !values.address) {
+        setError("Vui lòng điền đầy đủ các thông tin có đánh dấu *.");
         return;
       }
 
@@ -954,7 +954,9 @@ const shippingFee = 25000;
       display: flex;
     }
 
-    .desktop-notice {
+    .desktop-notice,
+    .payment-submit,
+    .payment-secure-note {
       display: none !important;
     }
   }
