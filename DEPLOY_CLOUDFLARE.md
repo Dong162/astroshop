@@ -1,98 +1,94 @@
-# Hướng Dẫn Triển Khai (Deploy) Dự Án Astro Lên Cloudflare Pages
+# 🚀 Hướng Dẫn Triển Khai Đông Tạp Hóa (Full Step-by-Step)
 
-Tài liệu này hướng dẫn chi tiết từng bước (cầm tay chỉ việc) để đưa dự án **Đông Tạp Hóa** lên internet sử dụng **Cloudflare Pages**. Cloudflare cung cấp tốc độ tải trang cực nhanh, miễn phí SSL, tính năng CDN mạnh mẽ và kết nối tự động với GitHub.
-
----
-
-## 🛠 Giai đoạn 1: Chuẩn Bị Dự Án
-Vì dự án Astro của chúng ta có sử dụng các biến tham số môi trường (Environment Variables) như Supabase URL hay thông tin Admin, chúng ta cần cài đặt Cloudflare Adapter cho dự án.
-
-1. **Mở Terminal (Dấu nhắc lệnh) trong VS Code**
-2. Cài đặt adapter của Cloudflare bằng lệnh sau (nhấn `y` - yes nếu được hỏi):
-   ```bash
-   npx astro add cloudflare
-   ```
-   *Lưu ý: Lệnh này sẽ tự động cập nhật file `astro.config.mjs` của bạn để cấu hình output cho Cloudflare.*
-
-3. Mở file `astro.config.mjs` và tự kiểm tra. Nó nên trông giống thế này:
-   ```javascript
-   import { defineConfig } from "astro/config";
-   import cloudflare from "@astrojs/cloudflare";
-
-   export default defineConfig({
-     output: "server", // hoặc có thể là "hybrid"
-     adapter: cloudflare()
-   });
-   ```
+Tài liệu này hướng dẫn bạn cách đưa website **Đông Tạp Hóa** từ máy tính cá nhân lên internet một cách chuyên nghiệp, sử dụng **Supabase** (Cơ sở dữ liệu) và **Cloudflare Pages** (Lưu trữ website).
 
 ---
 
-## 🚀 Giai đoạn 2: Đẩy Code Lên GitHub
-Cloudflare Pages sẽ theo dõi mã nguồn của bạn trên GitHub để tự động cập nhật website mỗi khi có thay đổi.
+## 🛠 Giai đoạn 1: Thiết lập Cơ sở dữ liệu (Supabase)
 
-1. Tạo một Repository (Kho lưu trữ) mới trên [GitHub](https://github.com/).
-2. Trong Terminal của VS Code, kiểm tra và đẩy code lên Github bằng cách chạy lần lượt các lệnh sau:
-   ```bash
-   git add .
-   git commit -m "Chuẩn bị code để deploy lên Cloudflare"
-   git branch -M main
-   # Thay URL dưới đây bằng URL repo thực tế của bạn
-   git remote add origin https://github.com/Dong162/astroshop.git
-   git push -u origin main
-   ```
+Để website có thể lưu đơn hàng và quản lý mã giảm giá, bạn cần một cơ sở dữ liệu.
 
----
-
-## ☁️ Giai đoạn 3: Thiết Lập Trên Cloudflare
-
-1. Đăng ký hoặc Đăng nhập vào [Cloudflare Dashboard](https://dash.cloudflare.com/).
-2. Tại cột menu bên trái, chọn **Workers & Pages**.
-3. Nhấp vào nút màu xanh **Create application** (Tạo ứng dụng), sau đó chuyển sang tab **Pages**.
-4. Nhấp vào **Connect to Git** (Kết nối với Git).
-5. Cloudflare sẽ yêu cầu bạn cấp quyền truy cập GitHub. Hãy đồng ý và chọn Repository mà bạn vừa push code lên ở Giai đoạn 2.
-6. Tham số **Production branch** cứ để là `main`. Lướt xuống dưới và nhấn **Begin setup**.
+1.  **Tạo tài khoản & Dự án**:
+    - Truy cập [Supabase](https://supabase.com/) và đăng nhập.
+    - Nhấn **New Project**, đặt tên (ví dụ: `dongtaphoa-db`) và lưu lại mật khẩu Database.
+2.  **Chạy mã SQL (Tạo bảng)**:
+    - Tại cột menu bên trái, chọn **SQL Editor**.
+    - Nhấn **New query** và copy nội dung các file trong thư mục `supabase/sql` vào để chạy (nhấn nút **Run**):
+        - Chạy file `create_astro_orders.sql` (Tạo bảng đơn hàng).
+        - Chạy file `create_astro_vouchers.sql` (Tạo bảng mã giảm giá).
+        - Chạy các file `enable_..._select.sql` để cấp quyền đọc dữ liệu cho website.
+3.  **Lấy thông tin kết nối**:
+    - Chọn **Project Settings** (biểu tượng bánh răng) -> **API**.
+    - Lưu lại 2 giá trị: **Project URL** và **API Key (service_role)** hoặc **anon key**.
 
 ---
 
-## ⚙️ Giai đoạn 4: Cấu Hình Build & Biến Môi Trường (Quan trọng nhất)
+## ⚙️ Giai đoạn 2: Cấu hình mã nguồn & Biến môi trường
 
-Trên màn hình tiếp theo, bạn cần điền chính xác các thông số để Cloudflare hiểu cách dịch (build) dự án Astro:
+Trước khi đẩy code lên mạng, bạn cần thiết lập thông tin shop của mình.
 
-1. **Build settings (Cài đặt build):**
-   - **Framework preset:** Chọn `Astro`.
-   - **Build command:** `npm run build`
-   - **Build output directory:** `dist`
-
-2. **Environment variables (Biến môi trường - Cực kỳ quan trọng):**
-   Mở file `.env` (hoặc `.env.example`) trên VS Code của bạn và copy các biến này dán vào Cloudflare (Bằng cách nhấn nút **Add variable**). Việc này sẽ giúp website có thể gọi API đến dữ liệu và Admin.
-   
-   - Variable name: `PUBLIC_SUPABASE_URL` | Value: *(Điền đường link supabase của bạn)*
-   - Variable name: `PUBLIC_SUPABASE_ANON_KEY` | Value: *(Điền key supabase anon của bạn)*
-   - Variable name: `PUBLIC_SUPABASE_ORDERS_TABLE` | Value: `astro_orders`
-   - Variable name: `ADMIN_USERNAME` | Value: *(Điền tên đăng nhập admin)*
-   - Variable name: `ADMIN_PASSWORD` | Value: *(Điền mật khẩu admin)*
-   - Variable name: `ADMIN_SESSION_TTL_MINUTES` | Value: `480`
-
-3. Nhấp vào nút **Save and Deploy** (Lưu và Triển khai).
+1.  **Mở file `.env`** trong VS Code:
+    - Điền URL và Key bạn vừa lấy từ Supabase vào:
+        - `PUBLIC_SUPABASE_URL`: (Dán Project URL)
+        - `PUBLIC_SUPABASE_ANON_KEY`: (Dán API Key)
+    - Thiết lập thông tin Shop:
+        - `PUBLIC_SITE_NAME`: "Đông Tạp Hóa" (Hoặc tên shop của bạn).
+        - `PUBLIC_SITE_URL`: "https://ten-mien-cua-ban.vn" (Dùng cho SEO & Sitemap).
+        - `PUBLIC_DEFAULT_SHIPPING_FEE`: `25000` (Phí ship mặc định).
+    - Thiết lập Admin:
+        - `ADMIN_USERNAME`: Tên đăng nhập để quản lý đơn hàng.
+        - `ADMIN_PASSWORD`: Mật khẩu quản trị.
 
 ---
 
-## 🎉 Giai đoạn 5: Tận Hưởng Thành Quả
+## 📦 Giai đoạn 3: Đẩy mã nguồn lên GitHub
 
-1. Cloudflare sẽ bắt đầu tải code của bạn về, chạy lệnh build cài tự động thiết lập môi trường. Quá trình này mất khoảng 1-2 phút.
-2. Sau khi quá trình chạy xong báo Success, bạn sẽ nhận được một đường link hiển thị miễn phí dạng `https://ten-du-an.pages.dev`.
-3. Bạn có thể bấm vào URL đó để xem website của mình đang chạy trực tiếp trên Internet.
+Cloudflare sẽ tự động cập nhật web mỗi khi bạn thay đổi code trên GitHub.
 
-### Khuyến nghị: Thêm Tên Miền Riêng (Custom Domain)
-Nếu bạn đã mua tên miền (ví dụ: `dongtaphoa.vn`), bạn có thể thêm nó vào dễ dàng:
-- Tại trang quản lý Project (Pages) vừa tạo xong, chuyển qua tab **Custom domains**.
-- Chọn **Set up a custom domain** và nhập tên miền của bạn. Cloudflare sẽ hướng dẫn bạn tự động cấu hình các bản ghi DNS.
+1.  Tạo Repository mới trên [GitHub](https://github.com/).
+2.  Mở Terminal trong VS Code và chạy các lệnh sau:
+    ```bash
+    git add .
+    git commit -m "Hoàn thiện cấu hình SEO và Biến môi trường"
+    git branch -M main
+    # Thay link dưới bằng link repo GitHub của bạn
+    git remote add origin https://github.com/USERNAME/REPO_NAME.git
+    git push -u origin main
+    ```
 
-### Vòng đời bảo trì và cập nhật 
-Tuyệt vời nhất là với những lần sau. Mỗi khi bạn đổi nội dung hay muốn sửa giá sản phẩm, thay vì mở Cloudflare thay đổi, bạn **CHỈ CẦN mở Terminal VS Code** gõ:
-```bash
-git add .
-git commit -m "Cập nhật tính năng / nội dung mới"
-git push
-```
-Cloudflare Pages sẽ tự thấy bạn có gửi bản cập nhật trên Github và tự build lại website trong nền cho khách hàng truy cập.
+---
+
+## ☁️ Giai đoạn 4: Triển khai lên Cloudflare Pages
+
+1.  **Kết nối GitHub**:
+    - Trên [Cloudflare Dashboard](https://dash.cloudflare.com/), chọn **Workers & Pages** -> **Create application** -> **Pages** -> **Connect to Git**.
+    - Chọn repository bạn vừa push lên.
+2.  **Cấu hình Build**:
+    - **Framework preset**: Chọn `Astro`.
+    - **Build command**: `npm run build`
+    - **Build output directory**: `dist`
+3.  **Nhập Biến môi trường (Cực kỳ quan trọng)**:
+    - Trong mục **Environment variables**, bạn phải nhập **TẤT CẢ** các dòng có trong file `.env` của bạn vào đây.
+    - Cloudflare cần những thông số này để kết nối với Database và hiển thị đúng tên shop của bạn.
+4.  **Nhấn "Save and Deploy"**: Chờ khoảng 2 phút để website lên sóng.
+
+---
+
+## 🔍 Giai đoạn 5: Kiểm tra & Tối ưu SEO
+
+Sau khi deploy xong, bạn sẽ có một đường link dạng `https://ten-du-an.pages.dev`.
+
+1.  **Kiểm tra Sitemap**: Truy cập `đường-link-của-bạn/sitemap-index.xml`. Nếu thấy danh sách link sản phẩm thì SEO đã hoạt động.
+2.  **Kiểm tra Robots.txt**: Truy cập `đường-link-của-bạn/robots.txt`.
+3.  **Gắn tên miền riêng**:
+    - Trong trang quản trị dự án trên Cloudflare, chọn tab **Custom domains**.
+    - Nhập tên miền bạn đã mua (ví dụ: `dongtaphoa.vn`) và làm theo hướng dẫn tự động của Cloudflare.
+
+---
+
+## 💡 Lưu ý bảo trì
+
+Mỗi khi bạn muốn thay đổi tên shop, phí ship hoặc cập nhật tính năng mới:
+1. Sửa code hoặc file `.env` trên máy tính.
+2. Mở terminal gõ: `git add .`, `git commit -m "update"`, `git push`.
+3. Cloudflare sẽ tự thấy sự thay đổi và cập nhật website cho bạn sau 1 phút. Không cần thao tác gì thêm!

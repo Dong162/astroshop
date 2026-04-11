@@ -1,9 +1,9 @@
 ---
 import MainLayout from "../layouts/MainLayout.astro";
-import { buildPageTitle } from "../lib/seo";
+import { buildPageTitle, SITE_NAME } from "../lib/seo";
 
 const title = buildPageTitle("Cảm ơn");
-const description = "Thông tin đơn hàng vừa đặt tại Đông Tạp Hóa.";
+const description = `Thông tin đơn hàng vừa đặt tại ${SITE_NAME}.`;
 ---
 
 <MainLayout title={title} description={description} noindex>

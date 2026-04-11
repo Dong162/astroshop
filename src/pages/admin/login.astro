@@ -4,7 +4,8 @@ import MainLayout from "../../layouts/MainLayout.astro";
 import { buildPageTitle } from "../../lib/seo";
 
 const title = buildPageTitle("Đăng nhập Admin");
-const description = "Đăng nhập vào khu vực quản trị đơn hàng của Đông Tạp Hóa.";
+import { SITE_NAME } from "../../lib/seo";
+const description = `Đăng nhập vào khu vực quản trị đơn hàng của ${SITE_NAME}.`;
 
 const rawAdminUsername = (import.meta.env.ADMIN_USERNAME ?? "").trim();
 const rawAdminPassword = (import.meta.env.ADMIN_PASSWORD ?? "").trim();
@@ -63,7 +64,7 @@ const adminCredentialHash = adminAuthConfigured ? buildAdminCredentialHash(rawAd
         </form>
 
         <footer class="admin-login__footer">
-          <p>© {new Date().getFullYear()} Đông Tạp Hóa. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} {SITE_NAME}. All rights reserved.</p>
         </footer>
       </article>
     </div>

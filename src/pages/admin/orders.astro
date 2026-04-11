@@ -1,10 +1,10 @@
 ---
 import { buildAdminCredentialHash } from "../../lib/admin-hash";
 import MainLayout from "../../layouts/MainLayout.astro";
-import { buildPageTitle } from "../../lib/seo";
+import { buildPageTitle, SITE_NAME } from "../../lib/seo";
 
 const title = buildPageTitle("Quản lý đơn hàng");
-const description = "Trình quản trị theo dõi và xử lý đơn hàng của Đông Tạp Hóa.";
+const description = `Trình quản trị theo dõi và xử lý đơn hàng của ${SITE_NAME}.`;
 
 const rawAdminUsername = (import.meta.env.ADMIN_USERNAME ?? "").trim();
 const rawAdminPassword = (import.meta.env.ADMIN_PASSWORD ?? "").trim();

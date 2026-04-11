@@ -1,7 +1,7 @@
-﻿import type { Product } from "../types/product";
+import type { Product } from "../types/product";
 
-export const SITE_NAME = "Tap Hoa Tech";
-const DEFAULT_SITE_URL = "https://example.com";
+export const SITE_NAME = import.meta.env.PUBLIC_SITE_NAME ?? "Đông Tạp Hóa";
+const DEFAULT_SITE_URL = import.meta.env.PUBLIC_SITE_URL ?? "https://dongtaphoa.vn";
 
 function normalizeWhitespace(value: string): string {
   return value.replace(/\s+/g, " ").trim();
@@ -76,7 +76,7 @@ export function buildOrganizationJsonLd(siteUrl: string) {
     "@type": "Organization",
     name: SITE_NAME,
     url: buildAbsoluteUrl("/", siteUrl),
-    email: "sales@example.com",
+    email: "lienhe@dongtaphoa.vn",
     telephone: "0911311139"
   };
 }
@@ -109,7 +109,7 @@ export function buildProductJsonLd(product: Product, siteUrl: string) {
   const imageUrls =
     product.images.length > 0
       ? product.images.map((image) => buildAbsoluteUrl(image.src, siteUrl))
-      : [buildAbsoluteUrl("https://placehold.co/1200x1200/f3f4f6/111827?text=Tap+Hoa+Tech", siteUrl)];
+      : [buildAbsoluteUrl("https://placehold.co/1200x1200/f3f4f6/111827?text=Đông+Tạp+Hóa", siteUrl)];
   const displayPrice = product.sale_price ?? product.regular_price;
 
   return {

@@ -1,11 +1,9 @@
 ---
 import MainLayout from "../layouts/MainLayout.astro";
-import { formatCurrency } from "../lib/products";
-import { buildPageTitle } from "../lib/seo";
-
+import { buildPageTitle, SITE_NAME } from "../lib/seo";
 const title = buildPageTitle("Giỏ hàng");
-const description = "Xem và quản lý giỏ hàng của bạn tại Đông Tạp Hóa.";
-const shippingFee = 25000;
+const description = `Xem và quản lý giỏ hàng của bạn tại ${SITE_NAME}.`;
+const shippingFee = Number(import.meta.env.PUBLIC_DEFAULT_SHIPPING_FEE ?? 25000);
 ---
 
 <MainLayout title={title} description={description} noindex>
