@@ -1,4 +1,4 @@
-﻿---
+---
 import MainLayout from "../layouts/MainLayout.astro";
 import { buildPageTitle } from "../lib/seo";
 
@@ -82,6 +82,10 @@ const description = "Thông tin đơn hàng vừa đặt tại Đông Tạp Hóa
             <span>Phí vận chuyển</span>
             <strong data-thanks-shipping>--</strong>
           </div>
+          <div class="thanks-total-row text-green" data-thanks-discount-row hidden>
+            <span>Giảm giá</span>
+            <strong data-thanks-discount>--</strong>
+          </div>
           <div class="thanks-total-row thanks-total-row--grand">
             <span>Tổng cộng</span>
             <strong data-thanks-total>--</strong>
@@ -133,6 +137,7 @@ const description = "Thông tin đơn hàng vừa đặt tại Đông Tạp Hóa
     status: string;
     subtotal: number;
     shippingFee: number;
+    discountAmount?: number;
     total: number;
     itemCount: number;
     createdAt: string;
@@ -165,6 +170,8 @@ const description = "Thông tin đơn hàng vừa đặt tại Đông Tạp Hóa
     const dateNode = thanksPage.querySelector<HTMLElement>("[data-thanks-date]");
     const subtotalNode = thanksPage.querySelector<HTMLElement>("[data-thanks-subtotal]");
     const shippingNode = thanksPage.querySelector<HTMLElement>("[data-thanks-shipping]");
+    const discountRowNode = thanksPage.querySelector<HTMLElement>("[data-thanks-discount-row]");
+    const discountNode = thanksPage.querySelector<HTMLElement>("[data-thanks-discount]");
     const totalNode = thanksPage.querySelector<HTMLElement>("[data-thanks-total]");
 
     const showEmpty = () => {
@@ -192,6 +199,7 @@ const description = "Thông tin đơn hàng vừa đặt tại Đông Tạp Hóa
           status: String(parsed.status ?? "pending"),
           subtotal: Number(parsed.subtotal ?? 0),
           shippingFee: Number(parsed.shippingFee ?? 0),
+          discountAmount: Number(parsed.discountAmount ?? 0),
           total: Number(parsed.total ?? 0),
           itemCount: Number(parsed.itemCount ?? 0),
           createdAt: String(parsed.createdAt ?? ""),
@@ -245,6 +253,12 @@ const description = "Thông tin đơn hàng vừa đặt tại Đông Tạp Hóa
 
       if (subtotalNode) subtotalNode.textContent = formatCartCurrency(snapshot.subtotal);
       if (shippingNode) shippingNode.textContent = formatCartCurrency(snapshot.shippingFee);
+      if (snapshot.discountAmount) {
+         if (discountRowNode) discountRowNode.hidden = false;
+         if (discountNode) discountNode.textContent = "-" + formatCartCurrency(snapshot.discountAmount);
+      } else {
+         if (discountRowNode) discountRowNode.hidden = true;
+      }
       if (totalNode) totalNode.textContent = formatCartCurrency(snapshot.total);
 
       if (itemContainer && itemTemplate) {
@@ -520,6 +534,10 @@ const description = "Thông tin đơn hàng vừa đặt tại Đông Tạp Hóa
     font-size: 1.2rem;
     color: #dc2626;
     font-weight: 800;
+  }
+
+  .text-green {
+    color: #16a34a;
   }
 
   .thanks-actions {

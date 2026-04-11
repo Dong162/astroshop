@@ -47,6 +47,13 @@ const adminCredentialHash = adminAuthConfigured ? buildAdminCredentialHash(rawAd
           </svg>
           <span>Đơn hàng</span>
         </a>
+        <a href="/admin/vouchers" class="admin-nav__item">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+            <line x1="7" y1="7" x2="7.01" y2="7"></line>
+          </svg>
+          <span>Mã giảm giá</span>
+        </a>
         <a href="/" class="admin-nav__item">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
@@ -282,6 +289,10 @@ const adminCredentialHash = adminAuthConfigured ? buildAdminCredentialHash(rawAd
               <span>Phí vận chuyển</span>
               <strong data-detail-shipping></strong>
             </div>
+            <div class="detail-total-row text-green" data-detail-discount-row hidden>
+              <span>Giảm giá</span>
+              <strong data-detail-discount></strong>
+            </div>
             <div class="detail-total-row detail-total-row--grand">
               <span>Tổng tiền</span>
               <strong data-detail-total></strong>
@@ -315,6 +326,7 @@ const adminCredentialHash = adminAuthConfigured ? buildAdminCredentialHash(rawAd
     status: string;
     subtotal: number;
     shippingFee: number;
+    discountAmount?: number;
     total: number;
     items: OrderItem[];
   }
@@ -387,6 +399,7 @@ const adminCredentialHash = adminAuthConfigured ? buildAdminCredentialHash(rawAd
       status: toText(rec.status).toLowerCase() || "pending",
       subtotal,
       shippingFee,
+      discountAmount: typeof rec.discount_amount !== 'undefined' ? toNumber(rec.discount_amount) : undefined,
       total: toNumber(rec.total, subtotal + shippingFee),
       items
     };
@@ -417,6 +430,8 @@ const adminCredentialHash = adminAuthConfigured ? buildAdminCredentialHash(rawAd
     const detailItems = page.querySelector<HTMLElement>("[data-detail-items]");
     const detailSubtotal = page.querySelector<HTMLElement>("[data-detail-subtotal]");
     const detailShipping = page.querySelector<HTMLElement>("[data-detail-shipping]");
+    const detailDiscountRow = page.querySelector<HTMLElement>("[data-detail-discount-row]");
+    const detailDiscount = page.querySelector<HTMLElement>("[data-detail-discount]");
     const detailTotal = page.querySelector<HTMLElement>("[data-detail-total]");
 
     const statTotal = page.querySelector<HTMLElement>("[data-stat-total]");
@@ -457,6 +472,12 @@ const adminCredentialHash = adminAuthConfigured ? buildAdminCredentialHash(rawAd
       if (detailCount) detailCount.textContent = `${getItemCount(order)} sản phẩm`;
       if (detailSubtotal) detailSubtotal.textContent = currencyFormatter.format(order.subtotal);
       if (detailShipping) detailShipping.textContent = currencyFormatter.format(order.shippingFee);
+      if (order.discountAmount && order.discountAmount > 0) {
+         if (detailDiscountRow) detailDiscountRow.hidden = false;
+         if (detailDiscount) detailDiscount.textContent = "-" + currencyFormatter.format(order.discountAmount);
+      } else {
+         if (detailDiscountRow) detailDiscountRow.hidden = true;
+      }
       if (detailTotal) detailTotal.textContent = currencyFormatter.format(order.total);
 
       if (detailNoteWrap) detailNoteWrap.hidden = !order.note;
@@ -579,7 +600,7 @@ const adminCredentialHash = adminAuthConfigured ? buildAdminCredentialHash(rawAd
 
         try {
           const params = new URLSearchParams({
-            select: "id,created_at,customer_name,customer_phone,customer_email,shipping_address,note,payment_method,status,subtotal,shipping_fee,total,items",
+            select: "id,created_at,customer_name,customer_phone,customer_email,shipping_address,note,payment_method,status,subtotal,shipping_fee,discount_amount,total,items",
             order: "created_at.desc.nullslast"
           });
           const res = await fetch(`${supabaseUrl}/rest/v1/${ordersTable}?${params}`, {

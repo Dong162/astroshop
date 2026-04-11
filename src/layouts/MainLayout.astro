@@ -33,6 +33,7 @@ const schemaList = Array.isArray(structuredData)
     : [];
 const isHomePage = pathname === "/";
 const sectionLink = (hash: string) => (isHomePage ? hash : `/${hash}`);
+const hideMobileFooter = pathname.startsWith("/cart") || pathname.startsWith("/payment");
 ---
 
 <!doctype html>
@@ -162,7 +163,7 @@ const sectionLink = (hash: string) => (isHomePage ? hash : `/${hash}`);
       <slot />
     </main>
 
-    <footer class="site-footer">
+    <footer class={`site-footer ${hideMobileFooter ? 'hide-on-mobile' : ''}`}>
       <div class="container">
         <div class="site-footer__grid">
           <div class="footer-brand-col">
@@ -339,5 +340,12 @@ const sectionLink = (hash: string) => (isHomePage ? hash : `/${hash}`);
         });
       });
     </script>
+    <style>
+      @media (max-width: 800px) {
+        .site-footer.hide-on-mobile {
+          display: none !important;
+        }
+      }
+    </style>
   </body>
 </html>

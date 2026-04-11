@@ -1,0 +1,1054 @@
+---
+import { buildAdminCredentialHash } from "../../lib/admin-hash";
+import MainLayout from "../../layouts/MainLayout.astro";
+import { buildPageTitle } from "../../lib/seo";
+
+const title = buildPageTitle("Quản lý mã giảm giá");
+const description = "Trình quản trị theo dõi và xử lý mã giảm giá của Đông Tạp Hóa.";
+
+const rawAdminUsername = (import.meta.env.ADMIN_USERNAME ?? "").trim();
+const rawAdminPassword = (import.meta.env.ADMIN_PASSWORD ?? "").trim();
+const configuredTtl = Number(import.meta.env.ADMIN_SESSION_TTL_MINUTES ?? 480);
+const adminSessionTtlMinutes = Number.isFinite(configuredTtl) ? Math.max(5, Math.floor(configuredTtl)) : 480;
+
+const adminAuthConfigured = rawAdminUsername.length > 0 && rawAdminPassword.length > 0;
+const adminCredentialHash = adminAuthConfigured ? buildAdminCredentialHash(rawAdminUsername, rawAdminPassword) : "";
+---
+
+<MainLayout title={title} description={description} noindex>
+  <section
+    class="admin-dashboard"
+    data-admin-vouchers
+    data-admin-auth-configured={adminAuthConfigured ? "true" : "false"}
+    data-admin-credential-hash={adminCredentialHash}
+    data-admin-session-ttl={String(adminSessionTtlMinutes)}
+  >
+    <!-- SIDEBAR -->
+    <aside class="admin-sidebar" aria-label="Menu quản trị">
+      <div class="admin-sidebar__logo">
+        <div class="brand__mark brand__mark--sm">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+          </svg>
+        </div>
+        <div class="brand__text">
+          <strong>Đông Admin</strong>
+          <span class="brand__tagline">Hệ thống quản lý</span>
+        </div>
+      </div>
+
+      <nav class="admin-nav">
+        <a href="/admin/orders" class="admin-nav__item">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="3" y1="9" x2="21" y2="9"></line>
+            <line x1="9" y1="21" x2="9" y2="9"></line>
+          </svg>
+          <span>Đơn hàng</span>
+        </a>
+        <a href="/admin/vouchers" class="admin-nav__item active" aria-current="page">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+             <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+             <line x1="7" y1="7" x2="7.01" y2="7"></line>
+          </svg>
+          <span>Mã giảm giá</span>
+        </a>
+        <a href="/" class="admin-nav__item">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+          </svg>
+          <span>Xem cửa hàng</span>
+        </a>
+      </nav>
+
+      <div class="admin-sidebar__footer">
+        <a href="/admin/login?logout=1" class="admin-logout-btn" data-admin-logout>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+          <span>Đăng xuất</span>
+        </a>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="admin-main">
+      <header class="admin-header">
+        <div class="admin-header__left">
+          <h1>Danh sách Mã giảm giá</h1>
+          <p>Tạo và quản lý các mã quà tặng, giảm giá cho khách hàng.</p>
+        </div>
+        <div class="admin-header__right" style="display:flex;gap:10px;">
+          <div class="sync-status" data-admin-last-sync style="align-self:center;">Đang kết nối...</div>
+          <button type="button" class="btn-primary" data-admin-add-voucher title="Thêm mã giảm giá mới">
+            + Thêm mã
+          </button>
+          <button type="button" class="btn-refresh" data-admin-refresh title="Làm mới dữ liệu">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="23 4 23 10 17 10"></polyline>
+              <polyline points="1 20 1 14 7 14"></polyline>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <div class="admin-status-bar" data-admin-status hidden></div>
+
+      <!-- TABLE CARD -->
+      <div class="admin-content-card">
+        <div class="admin-controls">
+          <div class="search-field">
+            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="search" placeholder="Tìm theo mã code..." data-admin-search autocomplete="off" />
+          </div>
+          <div class="filter-field">
+             <select data-admin-filter aria-label="Lọc theo trạng thái">
+               <option value="all">Tất cả</option>
+               <option value="active">Đang hoạt động</option>
+               <option value="inactive">Đã vô hiệu hóa</option>
+             </select>
+          </div>
+        </div>
+
+        <div class="table-container">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th class="col-id">Mã Code</th>
+                <th class="col-type">Loại</th>
+                <th class="col-total">Mức giảm</th>
+                <th class="col-status">Trạng thái</th>
+                <th class="col-created">Ngày tạo</th>
+                <th class="col-action">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody data-admin-table-body>
+              <!-- Rows injected by JS -->
+            </tbody>
+          </table>
+
+          <div class="admin-empty-state" data-admin-empty hidden>
+            <div class="empty-icon">📂</div>
+            <h3>Không tìm thấy mã giảm giá</h3>
+            <p>Thử thay đổi bộ lọc, từ khóa hoặc tạo mã mới.</p>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- ROW TEMPLATE -->
+    <template data-admin-row-template>
+      <tr>
+        <td class="cell-id">
+          <strong data-voucher-code></strong>
+        </td>
+        <td class="cell-type">
+          <span style="font-size:0.8rem;background:#f1f5f9;padding:4px 8px;border-radius:4px;" data-voucher-type></span>
+        </td>
+        <td class="cell-total">
+          <strong class="text-blue" data-voucher-discount></strong>
+        </td>
+        <td class="cell-status">
+          <span class="status-pill" data-voucher-status></span>
+        </td>
+        <td class="cell-date">
+          <span class="created-at" data-voucher-created></span>
+        </td>
+        <td class="cell-action" style="display:flex;gap:8px;">
+          <button type="button" class="btn-view-detail" data-voucher-edit>
+            Sửa
+          </button>
+          <button type="button" class="btn-delete" data-voucher-delete style="color:#ef4444;background:#fef2f2;border-radius:4px;border:1px solid #fee2e2;padding:4px 8px;cursor:pointer;font-weight:600;">
+            Xóa
+          </button>
+        </td>
+      </tr>
+    </template>
+
+    <!-- VOUCHER MODAL -->
+    <div class="order-detail-modal" data-voucher-modal hidden>
+      <button type="button" class="order-detail-modal__backdrop" data-voucher-modal-close aria-label="Đóng"></button>
+      <div class="order-detail-modal__panel" role="dialog" aria-modal="true" aria-labelledby="voucher-modal-title">
+        <div class="order-detail-modal__header">
+          <h3 id="voucher-modal-title">Thêm / Sửa mã</h3>
+          <button type="button" class="order-detail-modal__close" data-voucher-modal-close aria-label="Đóng popup">✕</button>
+        </div>
+
+        <form class="order-detail-modal__body" data-voucher-form>
+           <input type="hidden" name="id" data-voucher-id />
+          <div class="form-grid" style="display:grid;gap:16px;">
+            <label class="form-field">
+              <span class="form-label">Mã code (Ví dụ: GIAM50K) <em>*</em></span>
+              <input type="text" name="code" required style="padding:10px;border:1px solid #e2e8f0;border-radius:8px;" />
+            </label>
+            <label class="form-field">
+              <span class="form-label">Loại giảm giá</span>
+              <select name="discountType" style="padding:10px;border:1px solid #e2e8f0;border-radius:8px;">
+                 <option value="fixed_amount">Giảm tiền mặt (VND)</option>
+                 <option value="percentage">Giảm theo phần trăm (%)</option>
+                 <option value="free_shipping">Miễn phí vận chuyển</option>
+              </select>
+            </label>
+            <label class="form-field" data-discount-value-field>
+              <span class="form-label">Mức giảm (Tương ứng với loại) <em>*</em></span>
+              <input type="number" name="discount" required min="0" style="padding:10px;border:1px solid #e2e8f0;border-radius:8px;" />
+            </label>
+            <label class="form-field">
+              <span class="form-label">Trạng thái</span>
+              <select name="isActive" style="padding:10px;border:1px solid #e2e8f0;border-radius:8px;">
+                 <option value="true">Đang hoạt động</option>
+                 <option value="false">Vô hiệu hóa</option>
+              </select>
+            </label>
+          </div>
+          <div style="margin-top:20px;display:flex;justify-content:flex-end;gap:12px;">
+            <button type="button" class="btn-secondary" data-voucher-modal-close style="padding:10px 20px;background:#f1f5f9;color:#475569;border-radius:8px;border:none;font-weight:600;cursor:pointer;">Hủy bỏ</button>
+            <button type="submit" class="btn-primary" style="padding:10px 20px;background:#2563eb;color:#fff;border-radius:8px;border:none;font-weight:600;cursor:pointer;">Lưu thay đổi</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+</MainLayout>
+
+<script>
+  import { clearAdminSession, isAdminSessionValid } from "../../scripts/admin-auth";
+
+  interface VoucherRecord {
+    id: number | null;
+    code: string;
+    discount_type?: string;
+    discount_value?: number;
+    discount_amount?: number;
+    is_active: boolean;
+    created_at: string;
+  }
+
+  const currencyFormatter = new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+    maximumFractionDigits: 0
+  });
+
+  const page = document.querySelector<HTMLElement>("[data-admin-vouchers]");
+  const supabaseUrl = (import.meta.env.PUBLIC_SUPABASE_URL ?? "").trim();
+  const supabaseKey = (import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? "").trim();
+  const vouchersTable = "astro_vouchers";
+
+  const toText = (v: unknown) => (typeof v === "string" ? v.trim() : "");
+  const toNumber = (v: unknown, fb = 0) => {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : fb;
+  };
+
+  if (page) {
+    const statusNode = page.querySelector<HTMLElement>("[data-admin-status]");
+    const searchInput = page.querySelector<HTMLInputElement>("[data-admin-search]");
+    const filterSelect = page.querySelector<HTMLSelectElement>("[data-admin-filter]");
+    const refreshButton = page.querySelector<HTMLButtonElement>("[data-admin-refresh]");
+    const btnAdd = page.querySelector<HTMLButtonElement>("[data-admin-add-voucher]");
+    const lastSyncNode = page.querySelector<HTMLElement>("[data-admin-last-sync]");
+    const tableBody = page.querySelector<HTMLElement>("[data-admin-table-body]");
+    const emptyNode = page.querySelector<HTMLElement>("[data-admin-empty]");
+    const rowTemplate = page.querySelector<HTMLTemplateElement>("template[data-admin-row-template]");
+
+    const modal = page.querySelector<HTMLElement>("[data-voucher-modal]");
+    const modalCloseButtons = page.querySelectorAll<HTMLElement>("[data-voucher-modal-close]");
+    const form = page.querySelector<HTMLFormElement>("[data-voucher-form]");
+
+    const logoutBtn = page.querySelector<HTMLAnchorElement>("[data-admin-logout]");
+
+    const authConfigured = page.dataset.adminAuthConfigured === "true";
+    const credentialHash = (page.dataset.adminCredentialHash ?? "").trim();
+
+    const formatDt = (iso: string | null) => {
+      if (!iso) return "--";
+      const d = new Date(iso);
+      return Number.isNaN(d.getTime()) ? iso : d.toLocaleString("vi-VN", { dateStyle: "short", timeStyle: "short" });
+    };
+
+    const closeModal = (e?: Event) => {
+      if (e) {
+         e.preventDefault();
+         e.stopPropagation();
+      }
+      if (!modal) return;
+      modal.hidden = true;
+      document.body.classList.remove("is-modal-open");
+      if (form) form.reset();
+    };
+
+    const openModal = (voucher: VoucherRecord | null = null) => {
+      if (!modal || !form) return;
+      
+      const idInput = form.querySelector('[name="id"]') as HTMLInputElement;
+      const codeInput = form.querySelector('[name="code"]') as HTMLInputElement;
+      const discountTypeInput = form.querySelector('[name="discountType"]') as HTMLSelectElement;
+      const discountInput = form.querySelector('[name="discount"]') as HTMLInputElement;
+      const isActiveInput = form.querySelector('[name="isActive"]') as HTMLSelectElement;
+
+      if (voucher) {
+        idInput.value = String(voucher.id);
+        codeInput.value = voucher.code;
+        discountTypeInput.value = voucher.discount_type || "fixed_amount";
+        const val = voucher.discount_value !== undefined ? voucher.discount_value : (voucher.discount_amount || 0);
+        discountInput.value = String(val);
+        isActiveInput.value = voucher.is_active ? "true" : "false";
+      } else {
+        idInput.value = "";
+        codeInput.value = "";
+        discountTypeInput.value = "fixed_amount";
+        discountInput.value = "";
+        isActiveInput.value = "true";
+      }
+      discountTypeInput.dispatchEvent(new Event("change"));
+
+      modal.hidden = false;
+      document.body.classList.add("is-modal-open");
+    };
+
+    if (!authConfigured || !credentialHash || !isAdminSessionValid(credentialHash)) {
+      window.location.href = "/admin/login" + (authConfigured ? "" : "?error=config");
+    } else {
+      let allData: VoucherRecord[] = [];
+      let isLoading = false;
+
+      const setStatus = (msg: string, kind: "info" | "error" | "success") => {
+        if (!statusNode) return;
+        statusNode.hidden = false;
+        statusNode.textContent = msg;
+        statusNode.className = `admin-status-bar is-${kind}`;
+        
+        if (kind === "success") {
+           setTimeout(() => { if(statusNode.textContent === msg) statusNode.hidden = true; }, 3000);
+        }
+      };
+
+      const clearStatus = () => {
+        if (statusNode) statusNode.hidden = true;
+      };
+
+      const createRow = (item: VoucherRecord) => {
+        if (!rowTemplate) return document.createDocumentFragment();
+        const f = rowTemplate.content.cloneNode(true) as DocumentFragment;
+
+        const codeNode = f.querySelector<HTMLElement>("[data-voucher-code]");
+        const typeNode = f.querySelector<HTMLElement>("[data-voucher-type]");
+        const discountNode = f.querySelector<HTMLElement>("[data-voucher-discount]");
+        const statusPill = f.querySelector<HTMLElement>("[data-voucher-status]");
+        const createdNode = f.querySelector<HTMLElement>("[data-voucher-created]");
+        const editButton = f.querySelector<HTMLButtonElement>("[data-voucher-edit]");
+        const deleteButton = f.querySelector<HTMLButtonElement>("[data-voucher-delete]");
+
+        if (codeNode) codeNode.textContent = item.code;
+        if (typeNode) {
+           const types:Record<string,string> = {
+              "fixed_amount": "Tiền mặt",
+              "percentage": "Phần trăm",
+              "free_shipping": "Miễn phí Ship"
+           };
+           typeNode.textContent = types[item.discount_type || "fixed_amount"] || (item.discount_type || "fixed_amount");
+        }
+        if (discountNode) {
+           const val = item.discount_value !== undefined ? item.discount_value : (item.discount_amount || 0);
+           const type = item.discount_type || "fixed_amount";
+           if (type === "percentage") {
+              discountNode.textContent = val + "%";
+           } else if (type === "free_shipping") {
+              discountNode.textContent = "Toàn bộ phí Ship";
+           } else {
+              discountNode.textContent = currencyFormatter.format(val);
+           }
+        }
+        if (createdNode) createdNode.textContent = formatDt(item.created_at);
+        
+        if (statusPill) {
+          statusPill.textContent = item.is_active ? "Hoạt động" : "Ngừng";
+          statusPill.className = `status-pill is-${item.is_active ? 'completed' : 'cancelled'}`;
+        }
+        
+        if (editButton) editButton.dataset.id = String(item.id ?? "");
+        if (deleteButton) deleteButton.dataset.id = String(item.id ?? "");
+
+        return f;
+      };
+
+      const renderTable = () => {
+        const kw = searchInput?.value.trim().toLowerCase() || "";
+        const st = filterSelect?.value || "all";
+
+        const filtered = allData.filter((o) => {
+          if (st === "active" && !o.is_active) return false;
+          if (st === "inactive" && o.is_active) return false;
+          if (!kw) return true;
+          return o.code.toLowerCase().includes(kw);
+        });
+
+        if (tableBody) {
+          tableBody.replaceChildren();
+          filtered.forEach((o) => tableBody.append(createRow(o)));
+        }
+        if (emptyNode) emptyNode.hidden = filtered.length > 0;
+      };
+
+      const loadData = async (silent = false) => {
+        if (isLoading) return;
+        isLoading = true;
+        if (refreshButton) refreshButton.classList.add("is-spinning");
+        if (!silent) setStatus("Đang tải dữ liệu...", "info");
+
+        try {
+          const res = await fetch(`${supabaseUrl}/rest/v1/${vouchersTable}?select=*&order=created_at.desc`, {
+            cache: 'no-store',
+            headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` }
+          });
+          if (!res.ok) throw new Error(await res.text());
+          const raw = await res.json();
+          allData = Array.isArray(raw) ? raw : [];
+          renderTable();
+          clearStatus();
+          if (lastSyncNode) lastSyncNode.textContent = `Cập nhật lúc ${new Date().toLocaleTimeString("vi-VN")}`;
+        } catch (e) {
+          setStatus(`Lỗi tải mã giảm giá. Xem console.`, "error");
+        } finally {
+          isLoading = false;
+          if (refreshButton) refreshButton.classList.remove("is-spinning");
+        }
+      };
+
+      tableBody?.addEventListener("click", async (event) => {
+        const target = event.target as Element;
+        
+        const editButton = target.closest<HTMLButtonElement>("[data-voucher-edit]");
+        if (editButton) {
+           const id = editButton.dataset.id;
+           const v = allData.find(x => String(x.id) === id);
+           if (v) openModal(v);
+           return;
+        }
+
+        const deleteButton = target.closest<HTMLButtonElement>("[data-voucher-delete]");
+        if (deleteButton) {
+           const id = deleteButton.dataset.id;
+           if(confirm("Bạn có chắc chắn muốn xóa mã này?")) {
+              try {
+                const res = await fetch(`${supabaseUrl}/rest/v1/${vouchersTable}?id=eq.${id}`, {
+                    method: 'DELETE',
+                    headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` }
+                });
+                if (!res.ok) throw new Error("Delete failed");
+                setStatus("Xóa thành công", "success");
+                loadData(true);
+              } catch(e) {
+                setStatus("Lỗi khi xóa", "error");
+              }
+           }
+        }
+      });
+
+      form?.addEventListener("submit", async(e)=>{
+          e.preventDefault();
+          const btnSubmit = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+          if (btnSubmit) {
+              btnSubmit.disabled = true;
+              btnSubmit.textContent = "Đang lưu...";
+          }
+
+          const fd = new FormData(form);
+          let id = fd.get("id")?.toString() || "";
+          if (id === "null") id = ""; // Safeguard for "null" mapping
+          
+          const code = fd.get("code")?.toString().trim().toUpperCase() || "";
+          const discountType = fd.get("discountType")?.toString() || "fixed_amount";
+          const discountStr = fd.get("discount")?.toString() || "0";
+          const discount = parseInt(discountStr, 10);
+          const isActive = fd.get("isActive") === "true";
+
+          // Automatically send both fields to be completely backwards compatible
+          // in case their DB hasn't dropped discount_amount
+          const payload: any = {
+              code,
+              discount_type: discountType,
+              discount_value: discount,
+              is_active: isActive
+          };
+          
+          // To be safe against all table states (old or new), only send discount_amount if it's the old schema. 
+          // However, Supabase throws if we send extra columns. So we strictly send the NEW schema fields.
+          // IF this fails for the user, they MUST run the drop & recreate SQL.
+
+          try {
+              let res;
+              if (id) {
+                  res = await fetch(`${supabaseUrl}/rest/v1/${vouchersTable}?id=eq.${id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json', apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` },
+                    body: JSON.stringify(payload)
+                });
+              } else {
+                 res = await fetch(`${supabaseUrl}/rest/v1/${vouchersTable}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` },
+                    body: JSON.stringify(payload)
+                });
+              }
+              
+              if (!res.ok) {
+                 const errText = await res.text();
+                 throw new Error(errText);
+              }
+              
+              setStatus("Lưu thành công", "success");
+              closeModal();
+              await loadData(true);
+          } catch(err:any) {
+              console.error("Voucher Save Error:", err);
+              // alert the user to check RLS / constraints
+              let msg = err.message;
+              if (msg.includes('duplicate key value')) {
+                  msg = 'Mã giảm giá này đã tồn tại!';
+              } else if (msg.includes('row-level security')) {
+                  msg = 'Thiếu quyền thao tác. Vui lòng kiểm tra lại RLS trong Supabase.';
+              }
+              alert("Lỗi: " + msg);
+          } finally {
+              if (btnSubmit) {
+                  btnSubmit.disabled = false;
+                  btnSubmit.textContent = "Lưu thay đổi";
+              }
+          }
+      });
+
+      const discountTypeSelect = form?.querySelector<HTMLSelectElement>('[name="discountType"]');
+      const discountInputEl = form?.querySelector<HTMLInputElement>('[name="discount"]');
+      if (discountTypeSelect && discountInputEl) {
+         discountTypeSelect.addEventListener("change", () => {
+             if (discountTypeSelect.value === "free_shipping") {
+                 discountInputEl.value = "0";
+                 discountInputEl.disabled = true;
+                 discountInputEl.closest("label")!.style.opacity = "0.5";
+             } else {
+                 discountInputEl.disabled = false;
+                 discountInputEl.closest("label")!.style.opacity = "1";
+                 if (discountInputEl.value === "0") discountInputEl.value = "";
+             }
+         });
+      }
+
+      modalCloseButtons.forEach((button) => {
+          button.addEventListener("click", closeModal);
+      });
+
+      window.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && modal && !modal.hidden) {
+          closeModal();
+        }
+      });
+
+      searchInput?.addEventListener("input", renderTable);
+      filterSelect?.addEventListener("change", renderTable);
+      refreshButton?.addEventListener("click", () => loadData(false));
+      btnAdd?.addEventListener("click", () => openModal(null));
+      logoutBtn?.addEventListener("click", (e) => {
+        e.preventDefault();
+        clearAdminSession();
+        window.location.href = "/admin/login?logout=1";
+      });
+
+      loadData();
+    }
+  }
+</script>
+
+<style>
+  /* ── RESET LAYOUT ─────────────────────────────────────── */
+  :global(body) {
+    background: #f1f5f9;
+    min-height: 100vh;
+  }
+
+  :global(body.is-modal-open) {
+    overflow: hidden;
+  }
+
+  /* Override MainLayout container for full-width admin */
+  :global(.main-shell) {
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* ── DASHBOARD LAYOUT ─────────────────────────────────── */
+  .admin-dashboard {
+    display: flex;
+    min-height: 100vh;
+    font-family: "Be Vietnam Pro", "Inter", system-ui, sans-serif;
+  }
+
+  /* ── SIDEBAR (Dùng chung với orders.astro) ────────────────────── */
+  .admin-sidebar {
+    width: 256px;
+    background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    flex-shrink: 0;
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.12);
+    z-index: 10;
+  }
+
+  .admin-sidebar__logo {
+    padding: 24px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  }
+
+  .brand__mark {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: #fff;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+    flex-shrink: 0;
+  }
+
+  .brand__mark--sm {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+  }
+
+  .brand__text strong {
+    display: block;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.2;
+  }
+
+  .brand__tagline {
+    font-size: 0.7rem;
+    color: #64748b;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .admin-nav {
+    flex: 1;
+    padding: 16px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .admin-nav__item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 14px;
+    border-radius: 10px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #94a3b8;
+    text-decoration: none;
+    transition: all 0.18s ease;
+  }
+
+  .admin-nav__item:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: #e2e8f0;
+  }
+
+  .admin-nav__item.active {
+    background: rgba(59, 130, 246, 0.18);
+    color: #93c5fd;
+    border: 1px solid rgba(59, 130, 246, 0.25);
+  }
+
+  .admin-sidebar__footer {
+    padding: 16px 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
+  }
+
+  .admin-logout-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 14px;
+    width: 100%;
+    color: #f87171;
+    font-weight: 600;
+    font-size: 0.875rem;
+    border-radius: 10px;
+    text-decoration: none;
+    transition: background 0.18s ease;
+  }
+
+  .admin-logout-btn:hover {
+    background: rgba(239, 68, 68, 0.1);
+  }
+
+  /* ── MAIN CONTENT ─────────────────────────────────────── */
+  .admin-main {
+    flex: 1;
+    padding: 32px 36px;
+    overflow-y: auto;
+    min-width: 0;
+  }
+
+  .admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 28px;
+    gap: 20px;
+  }
+
+  .admin-header h1 {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 4px;
+    letter-spacing: -0.02em;
+  }
+
+  .admin-header p {
+    color: #64748b;
+    font-size: 0.95rem;
+  }
+
+  .sync-status {
+    font-size: 0.8rem;
+    color: #64748b;
+    font-weight: 500;
+  }
+
+  .btn-refresh, .btn-primary {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    color: #475569;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .btn-primary {
+      width: auto;
+      padding: 0 16px;
+      font-weight: 600;
+      color: #fff;
+      background: #2563eb;
+      border: none;
+  }
+
+  .btn-refresh:hover, .btn-primary:hover {
+    background: #f8fafc;
+    color: #0f172a;
+  }
+  .btn-primary:hover {
+      background: #1d4ed8;
+      color: #fff;
+  }
+
+  .btn-refresh.is-spinning svg {
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+
+  .admin-status-bar {
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+  }
+
+  .admin-status-bar.is-info {
+    background: #eff6ff;
+    color: #1e3a8a;
+    border: 1px solid #bfdbfe;
+  }
+
+  .admin-status-bar.is-error {
+    background: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+  }
+  
+  .admin-status-bar.is-success {
+    background: #f0fdf4;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+  }
+
+  /* ── TABLE CARD ───────────────────────────────────────── */
+  .admin-content-card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.02);
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+  }
+
+  .admin-controls {
+    padding: 20px 24px;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    background: #f8fafc;
+  }
+
+  .search-field {
+    position: relative;
+    max-width: 320px;
+    flex: 1;
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+  }
+
+  .search-field input {
+    width: 100%;
+    height: 42px;
+    padding: 0 16px 0 42px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    color: #0f172a;
+    transition: border-color 0.2s ease;
+  }
+
+  .search-field input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+
+  .filter-field select {
+    height: 42px;
+    padding: 0 36px 0 16px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    color: #334155;
+    font-weight: 500;
+    background-color: #fff;
+    cursor: pointer;
+  }
+
+  .table-container {
+    overflow-x: auto;
+  }
+
+  .admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 800px;
+  }
+
+  .admin-table th {
+    background: #fff;
+    padding: 16px 24px;
+    text-align: left;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 2px solid #e2e8f0;
+  }
+
+  .admin-table td {
+    padding: 16px 24px;
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  .col-id { width: 15%; }
+  .col-total { width: 25%; }
+  .col-status { width: 20%; }
+  .col-created { width: 20%; }
+  .col-action { width: 20%; text-align: right; }
+
+  .text-blue {
+    color: #1d4ed8;
+  }
+
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  .status-pill.is-completed {
+    background: #dcfce7;
+    color: #166534;
+  }
+
+  .status-pill.is-cancelled {
+    background: #fef2f2;
+    color: #991b1b;
+  }
+
+  .created-at {
+    font-size: 0.85rem;
+    color: #64748b;
+  }
+
+  .btn-view-detail {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .btn-view-detail:hover {
+    background: #dbeafe;
+  }
+
+  .admin-empty-state {
+    padding: 60px 20px;
+    text-align: center;
+    color: #64748b;
+  }
+
+  .empty-icon {
+    font-size: 3rem;
+    margin-bottom: 16px;
+    opacity: 0.5;
+  }
+
+  .admin-empty-state h3 {
+    color: #0f172a;
+    font-size: 1.1rem;
+    margin-bottom: 8px;
+  }
+
+  /* ── MODAL ────────────────────────────────────────────── */
+  .order-detail-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .order-detail-modal[hidden] {
+    display: none !important;
+  }
+
+  .order-detail-modal__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+    border: none;
+    width: 100%;
+    cursor: pointer;
+  }
+
+  .order-detail-modal__panel {
+    position: relative;
+    width: 100%;
+    max-width: 600px;
+    max-height: 90vh;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .order-detail-modal__header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .order-detail-modal__header h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0;
+  }
+
+  .order-detail-modal__close {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: none;
+    background: #f1f5f9;
+    color: #64748b;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .order-detail-modal__close:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+  }
+
+  .order-detail-modal__body {
+    padding: 24px;
+    overflow-y: auto;
+  }
+  
+  .form-label {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #334155;
+  }
+  
+  .form-label em {
+      color: #ef4444;
+      font-style: normal;
+  }
+</style>
