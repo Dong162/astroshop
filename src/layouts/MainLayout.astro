@@ -23,7 +23,7 @@ const {
 const siteUrl = Astro.site?.toString() ?? "https://example.com";
 const pathname = Astro.url.pathname || "/";
 const canonicalUrl = buildAbsoluteUrl(pathname, siteUrl);
-const imageUrl = image ? buildAbsoluteUrl(image, siteUrl) : undefined;
+const imageUrl = image ? buildAbsoluteUrl(image, siteUrl) : "https://placehold.co/1200x630/1d4ed8/ffffff.png?text=%C4%90%C3%B4ng+T%E1%BA%A1p+H%C3%B3a";
 const metaDescription = buildSeoDescription(description, 155);
 const robots = noindex ? "noindex, nofollow" : "index, follow, max-image-preview:large";
 const schemaList = Array.isArray(structuredData)
@@ -44,6 +44,7 @@ const hideMobileFooter = pathname.startsWith("/cart") || pathname.startsWith("/p
     <title>{title}</title>
     <meta name="description" content={metaDescription} />
     <meta name="robots" content={robots} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="canonical" href={canonicalUrl} />
     <link rel="alternate" hreflang="vi-VN" href={canonicalUrl} />
     <meta property="og:locale" content="vi_VN" />
@@ -52,13 +53,13 @@ const hideMobileFooter = pathname.startsWith("/cart") || pathname.startsWith("/p
     <meta property="og:title" content={title} />
     <meta property="og:description" content={metaDescription} />
     <meta property="og:url" content={canonicalUrl} />
-    <meta name="twitter:card" content={imageUrl ? "summary_large_image" : "summary"} />
+    <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={metaDescription} />
     <meta name="theme-color" content="#1d4ed8" />
-    {imageUrl && <meta property="og:image" content={imageUrl} />}
-    {imageUrl && <meta property="og:image:alt" content={title} />}
-    {imageUrl && <meta name="twitter:image" content={imageUrl} />}
+    <meta property="og:image" content={imageUrl} />
+    <meta property="og:image:alt" content={title} />
+    <meta name="twitter:image" content={imageUrl} />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

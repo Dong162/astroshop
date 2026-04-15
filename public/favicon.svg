@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background -->
+  <rect width="512" height="512" rx="120" fill="#1d4ed8"/>
+  <rect width="512" height="512" rx="120" fill="url(#grad)" opacity="0.8"/>
+  
+  <!-- Outer glowing rings -->
+  <circle cx="256" cy="256" r="160" fill="none" stroke="#fbbf24" stroke-width="16" opacity="0.8"/>
+  <circle cx="256" cy="256" r="200" fill="none" stroke="#93c5fd" stroke-width="8" opacity="0.3"/>
+  
+  <!-- Abstract shape (Lightning / Shopping integrated) -->
+  <path d="M220 130 L160 290 H240 L210 390 L340 230 H260 L290 130 Z" fill="#ffffff"/>
+  
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1e3a8a;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+</svg>
