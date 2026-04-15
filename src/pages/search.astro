@@ -213,7 +213,15 @@ const searchIndex = activeProducts.map((product) => {
 
     const currentQuery = new URLSearchParams(window.location.search).get("q") ?? "";
     
-    // --- INFINITE SCROLL LOGIC ---
+    // --- WEB WORKER INITIALIZATION ---
+    const searchWorker = new Worker(
+      new URL("../scripts/search-worker.ts", import.meta.url),
+      { type: "module" }
+    );
+
+    searchWorker.postMessage({ type: "INIT_INDEX", payload: parsedIndex });
+
+    // --- INFINITE SCROLL & UI STATE ---
     let matchedItems: SearchItem[] = [];
     let loadedCount = 0;
     let autoLoadCount = 0;
@@ -268,6 +276,23 @@ const searchIndex = activeProducts.map((product) => {
       }
     }, { rootMargin: "200px" });
 
+    // Listen for worker results
+    searchWorker.onmessage = (e) => {
+      const { type, payload, query } = e.data;
+      if (type === "RESULTS") {
+        matchedItems = payload;
+        
+        if (matchedItems.length === 0 && query !== "") {
+          emptyNode!.hidden = false;
+        } else {
+          emptyNode!.hidden = true;
+          loadNextBatch(); // Load first batch of results
+          observer.observe(triggerNode!);
+        }
+        updateMeta();
+      }
+    };
+
     const renderResults = (query: string) => {
       if (!resultsNode || !metaNode || !titleNode || !emptyNode || !controlsNode || !triggerNode) {
         return;
@@ -278,33 +303,15 @@ const searchIndex = activeProducts.map((product) => {
 
       titleNode.textContent = query ? `Ket qua tim kiem: ${query}` : "Tim kiem san pham";
       
-      // Reset state for new search
+      // Reset state and prepare for new search
       resultsNode.replaceChildren();
       observer.unobserve(triggerNode);
       controlsNode.hidden = true;
       autoLoadCount = 0;
       loadedCount = 0;
 
-      if (terms.length === 0) {
-        matchedItems = parsedIndex; // Show all products if no query
-        emptyNode.hidden = true;
-        loadNextBatch();
-        observer.observe(triggerNode);
-        updateMeta();
-        return;
-      }
-
-      matchedItems = parsedIndex.filter((item) => terms.every((term) => item.searchKey.includes(term)));
-      
-      if (matchedItems.length === 0) {
-        emptyNode.hidden = false;
-        updateMeta();
-        return;
-      }
-
-      emptyNode.hidden = true;
-      loadNextBatch(); // Initial batch
-      observer.observe(triggerNode);
+      // Delegate search to worker
+      searchWorker.postMessage({ type: "SEARCH", payload: { query, terms } });
     };
 
     loadAllBtn?.addEventListener("click", () => {

@@ -16,6 +16,8 @@ export async function getStaticPaths() {
     const activeProducts = allProducts.filter(item => item.stock_status !== "outofstock");
     const otherProducts = activeProducts.filter((item) => item.id !== currentProduct.id);
 
+    const normalizedCategories = new Set(currentProduct.categories.map(c => c.toLowerCase()));
+    
     const sameCategory = otherProducts.filter((item) =>
       item.categories.some((category) => normalizedCategories.has(category.toLowerCase()))
     );
@@ -58,6 +60,10 @@ const productUrl = `/products/${product.slug}/`;
 const structuredData = [
   buildBreadcrumbJsonLd([
     { name: "Trang chủ", url: new URL("/", siteUrl).toString() },
+    ...(product.categories[0] ? [{ 
+      name: product.categories[0], 
+      url: new URL(`/search?q=${encodeURIComponent(product.categories[0])}`, siteUrl).toString() 
+    }] : []),
     { name: product.name, url: new URL(productUrl, siteUrl).toString() }
   ]),
   buildProductJsonLd(product, siteUrl)
@@ -75,8 +81,12 @@ const structuredData = [
   <nav class="breadcrumb" aria-label="Breadcrumb">
     <a href="/">Trang chủ</a>
     <span>›</span>
-    <a href="/#ban-chay">Sản phẩm</a>
-    <span>›</span>
+    {product.categories[0] && (
+      <>
+        <a href={`/search?q=${encodeURIComponent(product.categories[0])}`}>{product.categories[0]}</a>
+        <span>›</span>
+      </>
+    )}
     <span>{product.name}</span>
   </nav>
 

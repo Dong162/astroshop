@@ -98,7 +98,7 @@ export function buildBreadcrumbJsonLd(items: Array<{ name: string; url: string }
     itemListElement: items.map((item, index) => ({
       "@type": "ListItem",
       position: index + 1,
-      name: item.name,
+      name: toPlainText(item.name),
       item: item.url
     }))
   };
