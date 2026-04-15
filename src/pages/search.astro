@@ -53,6 +53,15 @@ const searchIndex = activeProducts.map((product) => {
         <p>Thu doi tu khoa ngan gon hon hoac bo dau tieng Viet.</p>
         <a href="/" class="search-page__empty-link">Quay lai trang chu</a>
       </div>
+
+      <div class="search-pagination-controls" data-search-controls hidden>
+        <button type="button" class="btn-load-all-results" data-load-all-btn>
+          Xem tat ca ket qua
+          <span data-remaining-count></span>
+        </button>
+      </div>
+
+      <div class="scroll-trigger" data-search-trigger></div>
     </div>
 
     <template data-search-card-template>
@@ -202,42 +211,115 @@ const searchIndex = activeProducts.map((product) => {
       return fragment;
     };
 
+    const currentQuery = new URLSearchParams(window.location.search).get("q") ?? "";
+    
+    // --- INFINITE SCROLL LOGIC ---
+    let matchedItems: SearchItem[] = [];
+    let loadedCount = 0;
+    let autoLoadCount = 0;
+    const PAGE_SIZE = 20;
+    const MAX_AUTO_LOADS = 3;
+
+    const loadNextBatch = () => {
+      if (!resultsNode) return;
+      
+      const batch = matchedItems.slice(loadedCount, loadedCount + PAGE_SIZE);
+      if (batch.length === 0) return;
+
+      batch.forEach(item => {
+        resultsNode.append(createProductNode(item));
+      });
+
+      loadedCount += batch.length;
+      updateMeta();
+
+      if (loadedCount >= matchedItems.length) {
+        observer.unobserve(triggerNode!);
+        if (controlsNode) controlsNode.hidden = true;
+      }
+    };
+
+    const updateMeta = () => {
+      if (!metaNode) return;
+      if (matchedItems.length === 0) {
+        metaNode.textContent = "Nhap tu khoa tren o tim kiem de bat dau.";
+      } else {
+        metaNode.textContent = `Tim thay ${matchedItems.length} ket qua. Dang hien thi ${loadedCount} san pham.`;
+      }
+    };
+
+    const triggerNode = searchPage.querySelector<HTMLElement>("[data-search-trigger]");
+    const controlsNode = searchPage.querySelector<HTMLElement>("[data-search-controls]");
+    const loadAllBtn = searchPage.querySelector<HTMLButtonElement>("[data-load-all-btn]");
+    const remainingSpan = searchPage.querySelector<HTMLElement>("[data-remaining-count]");
+
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && loadedCount < matchedItems.length) {
+        if (autoLoadCount < MAX_AUTO_LOADS) {
+          loadNextBatch();
+          autoLoadCount++;
+        } else {
+          if (controlsNode) {
+            controlsNode.hidden = false;
+            if (remainingSpan) remainingSpan.textContent = `(${matchedItems.length - loadedCount})`;
+          }
+          observer.unobserve(triggerNode!);
+        }
+      }
+    }, { rootMargin: "200px" });
+
     const renderResults = (query: string) => {
-      if (!resultsNode || !metaNode || !titleNode || !emptyNode) {
+      if (!resultsNode || !metaNode || !titleNode || !emptyNode || !controlsNode || !triggerNode) {
         return;
       }
 
       const normalizedQuery = normalizeSearchText(query);
       const terms = normalizedQuery.split(" ").filter(Boolean);
-      const maxResults = 60;
 
       titleNode.textContent = query ? `Ket qua tim kiem: ${query}` : "Tim kiem san pham";
+      
+      // Reset state for new search
+      resultsNode.replaceChildren();
+      observer.unobserve(triggerNode);
+      controlsNode.hidden = true;
+      autoLoadCount = 0;
+      loadedCount = 0;
 
       if (terms.length === 0) {
-        resultsNode.replaceChildren();
+        matchedItems = parsedIndex; // Show all products if no query
         emptyNode.hidden = true;
-        metaNode.textContent = "Nhap tu khoa tren o tim kiem de bat dau.";
+        loadNextBatch();
+        observer.observe(triggerNode);
+        updateMeta();
         return;
       }
 
-      const matched = parsedIndex.filter((item) => terms.every((term) => item.searchKey.includes(term)));
-      const visibleItems = matched.slice(0, maxResults);
-
-      resultsNode.replaceChildren();
-      visibleItems.forEach((item) => {
-        resultsNode.append(createProductNode(item));
-      });
-
-      if (matched.length > maxResults) {
-        metaNode.textContent = `Tim thay ${matched.length} ket qua. Dang hien thi ${maxResults} ket qua dau tien.`;
-      } else {
-        metaNode.textContent = `Tim thay ${matched.length} ket qua.`;
+      matchedItems = parsedIndex.filter((item) => terms.every((term) => item.searchKey.includes(term)));
+      
+      if (matchedItems.length === 0) {
+        emptyNode.hidden = false;
+        updateMeta();
+        return;
       }
 
-      emptyNode.hidden = matched.length > 0;
+      emptyNode.hidden = true;
+      loadNextBatch(); // Initial batch
+      observer.observe(triggerNode);
     };
 
-    const currentQuery = new URLSearchParams(window.location.search).get("q") ?? "";
+    loadAllBtn?.addEventListener("click", () => {
+      if (!resultsNode || !controlsNode) return;
+      
+      const remaining = matchedItems.slice(loadedCount);
+      remaining.forEach(item => {
+        resultsNode.append(createProductNode(item));
+      });
+      
+      loadedCount = matchedItems.length;
+      updateMeta();
+      controlsNode.hidden = true;
+    });
+
     renderResults(currentQuery.trim());
   }
 </script>
@@ -292,6 +374,43 @@ const searchIndex = activeProducts.map((product) => {
     .search-page__box {
       padding: 16px;
     }
+  }
+
+  /* ── SEARCH PAGINATION ────────────────────── */
+  .search-pagination-controls {
+    display: flex;
+    justify-content: center;
+    margin-top: 40px;
+  }
+
+  .btn-load-all-results {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 32px;
+    background: #f1f5f9;
+    color: #1e293b;
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-load-all-results:hover {
+    background: #e2e8f0;
+    transform: translateY(-2px);
+  }
+
+  .btn-load-all-results span {
+    color: #64748b;
+    font-weight: 500;
+    font-size: 0.85rem;
+  }
+
+  .scroll-trigger {
+    height: 1px;
   }
 </style>
 

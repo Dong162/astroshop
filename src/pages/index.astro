@@ -183,6 +183,203 @@ const structuredData = [
       ))}
     </div>
   </section>
+
+  <!-- ALL PRODUCTS WITH INFINITE SCROLL -->
+  <section id="tat-ca-san-pham" class="home-section" data-infinite-scroll-section>
+    <div class="section-head">
+      <div class="section-head__title">
+        <span class="section-dot"></span>
+        <h2>Tất cả sản phẩm</h2>
+      </div>
+    </div>
+
+    <div class="products-grid" data-infinite-scroll-container>
+      <!-- Products injected by JS -->
+    </div>
+
+    <div class="infinite-scroll-controls" data-infinite-controls hidden>
+      <button type="button" class="btn-view-all-huge" data-load-all-btn>
+        Xem tất cả sản phẩm
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+      </button>
+    </div>
+
+    <div class="scroll-trigger" data-scroll-trigger></div>
+  </section>
+
+  <!-- CLIENT-SIDE RENDERING TEMPLATE -->
+  <template data-product-card-template>
+    <article class="product-card">
+      <a class="product-card__image" data-product-link>
+        <img data-product-image alt="" loading="lazy" />
+        <div class="product-badge product-badge--red" data-product-badge-flash hidden>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          Flash
+        </div>
+        <div class="product-badge product-badge--hot" data-product-badge-hot hidden>Nổi bật</div>
+        <div class="product-discount-tag" data-product-discount hidden></div>
+      </a>
+
+      <div class="product-card__body">
+        <div class="rating-line">
+          <span class="stars">★★★★★</span>
+          <span class="rating-count" data-product-rating-count></span>
+        </div>
+
+        <h3 class="product-title">
+          <a data-product-link data-product-name></a>
+        </h3>
+
+        <div class="product-card__footer">
+          <div class="price-container">
+            <strong data-product-price></strong>
+            <s data-product-regular hidden></s>
+          </div>
+          
+          <button class="cart-add-btn" type="button" data-product-cart-button>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+          </button>
+        </div>
+      </div>
+    </article>
+  </template>
+
+  <!-- DATA JSON -->
+  <script is:inline id="infinite-scroll-data" type="application/json" set:html={JSON.stringify(activeProducts.map(p => ({
+    id: p.id,
+    slug: p.slug,
+    name: p.name,
+    regularPrice: p.regular_price,
+    salePrice: p.sale_price,
+    image: p.images[0]?.src ?? "",
+    flash: p.flash,
+    isPopular: p.is_popular
+  })))} />
+
+  <script>
+    const section = document.querySelector<HTMLElement>("[data-infinite-scroll-section]");
+    if (section) {
+      const container = section.querySelector<HTMLElement>("[data-infinite-scroll-container]");
+      const trigger = section.querySelector<HTMLElement>("[data-scroll-trigger]");
+      const controls = section.querySelector<HTMLElement>("[data-infinite-controls]");
+      const template = document.querySelector<HTMLTemplateElement>("template[data-product-card-template]");
+      const dataNode = document.getElementById("infinite-scroll-data");
+
+      if (container && trigger && template && dataNode) {
+        const products = JSON.parse(dataNode.textContent || "[]");
+        const PAGE_SIZE = 20;
+        const MAX_AUTO_LOADS = 3;
+        const loadAllBtn = section.querySelector<HTMLButtonElement>("[data-load-all-btn]");
+        
+        let loadedCount = 0;
+        let autoLoadCount = 0;
+        
+        const formatter = new Intl.NumberFormat("vi-VN", {
+          style: "currency",
+          currency: "VND",
+          maximumFractionDigits: 0
+        });
+
+        const createCard = (product: any) => {
+          const frag = template.content.cloneNode(true) as DocumentFragment;
+          const productUrl = `/products/${product.slug}/`;
+          
+          const links = frag.querySelectorAll<HTMLAnchorElement>("[data-product-link]");
+          links.forEach(l => l.href = productUrl);
+
+          const img = frag.querySelector<HTMLImageElement>("[data-product-image]");
+          if (img) { img.src = product.image; img.alt = product.name; }
+
+          const name = frag.querySelector<HTMLElement>("[data-product-name]");
+          if (name) name.textContent = product.name;
+
+          const flashBadge = frag.querySelector<HTMLElement>("[data-product-badge-flash]");
+          if (flashBadge) flashBadge.hidden = !product.flash;
+
+          const hotBadge = frag.querySelector<HTMLElement>("[data-product-badge-hot]");
+          if (hotBadge) hotBadge.hidden = product.flash || !product.isPopular;
+
+          const discount = frag.querySelector<HTMLElement>("[data-product-discount]");
+          if (discount && product.salePrice) {
+            const pct = Math.max(1, Math.round((1 - product.salePrice / product.regularPrice) * 100));
+            discount.hidden = false;
+            discount.textContent = `-${pct}%`;
+          }
+
+          const rating = frag.querySelector<HTMLElement>("[data-product-rating-count]");
+          if (rating) rating.textContent = `(${(product.id % 5) + 3})`;
+
+          const price = frag.querySelector<HTMLElement>("[data-product-price]");
+          if (price) {
+            const displayPrice = product.salePrice ?? product.regularPrice;
+            price.textContent = formatter.format(displayPrice);
+            price.classList.add(product.flash ? "price-red" : "price-blue");
+          }
+
+          const regular = frag.querySelector<HTMLElement>("[data-product-regular]");
+          if (regular && product.salePrice) {
+            regular.hidden = false;
+            regular.textContent = formatter.format(product.regularPrice);
+          }
+
+          const cartBtn = frag.querySelector<HTMLButtonElement>("[data-product-cart-button]");
+          if (cartBtn) {
+            cartBtn.dataset.addToCart = "";
+            cartBtn.dataset.productId = String(product.id);
+            cartBtn.dataset.productSlug = product.slug;
+            cartBtn.dataset.productName = product.name;
+            cartBtn.dataset.productPrice = String(product.salePrice ?? product.regularPrice);
+            cartBtn.dataset.productRegularPrice = String(product.regularPrice);
+            cartBtn.dataset.productImage = product.image;
+            cartBtn.dataset.productUrl = productUrl;
+          }
+
+          return frag;
+        };
+
+        const loadNextBatch = () => {
+          const batch = products.slice(loadedCount, loadedCount + PAGE_SIZE);
+          if (batch.length === 0) {
+            observer.unobserve(trigger);
+            return;
+          }
+
+          batch.forEach((p: any) => container.appendChild(createCard(p)));
+          loadedCount += batch.length;
+
+          if (loadedCount >= products.length) {
+            observer.unobserve(trigger);
+            return;
+          }
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+          if (entries[0].isIntersecting && loadedCount < products.length) {
+            if (autoLoadCount < MAX_AUTO_LOADS) {
+              loadNextBatch();
+              autoLoadCount++;
+            } else {
+              if (controls) controls.hidden = false;
+              observer.unobserve(trigger);
+            }
+          }
+        }, { rootMargin: "200px" });
+
+        // Initial load
+        loadNextBatch();
+        observer.observe(trigger);
+
+        // Handle load all button
+        loadAllBtn?.addEventListener("click", () => {
+          const remaining = products.slice(loadedCount);
+          remaining.forEach((p: any) => container.appendChild(createCard(p)));
+          loadedCount = products.length;
+          if (controls) controls.hidden = true;
+          observer.unobserve(trigger);
+        });
+      }
+    }
+  </script>
 </MainLayout>
 
 <style>
@@ -190,6 +387,7 @@ const structuredData = [
   .home-hero {
     margin-bottom: 32px;
   }
+
 
   .home-hero__banner {
     display: grid;
@@ -547,5 +745,40 @@ const structuredData = [
     .flash-grid > * {
       flex: 0 0 calc(55vw - 28px);
     }
+  }
+
+  /* ── INFINITE SCROLL ──────────────────────── */
+  .infinite-scroll-controls {
+    display: flex;
+    justify-content: center;
+    margin-top: 40px;
+    margin-bottom: 20px;
+  }
+
+  .btn-view-all-huge {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 40px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: #fff;
+    font-weight: 800;
+    font-size: 1.1rem;
+    border-radius: 999px;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 10px 25px rgba(37, 99, 235, 0.25);
+  }
+
+  .btn-view-all-huge:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 15px 35px rgba(37, 99, 235, 0.35);
+    filter: brightness(1.1);
+  }
+
+  .scroll-trigger {
+    height: 10px;
   }
 </style>
