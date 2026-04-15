@@ -782,22 +782,33 @@ const shippingFee = Number(import.meta.env.PUBLIC_DEFAULT_SHIPPING_FEE ?? 25000)
   .voucher-input-group {
       display: flex;
       gap: 10px;
+      align-items: stretch;
   }
   .voucher-input-group input {
       flex: 1;
-      padding: 10px 14px;
+      min-width: 0;
+      height: 46px;
+      padding: 0 14px;
       border: 1px solid #e2e8f0;
       border-radius: 8px;
       font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+  }
+  .voucher-input-group input:focus {
+      border-color: #2563eb;
   }
   .voucher-input-group button {
-      padding: 0 16px;
+      padding: 0 20px;
+      height: 46px;
       background: #0f172a;
       color: #fff;
       border: none;
       border-radius: 8px;
       font-weight: 600;
       cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.2s;
       transition: background 0.2s;
   }
   .voucher-input-group button:hover {
