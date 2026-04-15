@@ -1,0 +1,481 @@
+---
+import { buildAdminCredentialHash } from "../../lib/admin-hash";
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import { buildPageTitle, SITE_NAME } from "../../lib/seo";
+import { getProducts, formatCurrency } from "../../lib/products";
+
+const title = buildPageTitle("Danh sách sản phẩm");
+const description = `Xem danh sách sản phẩm đã render trên ${SITE_NAME}.`;
+
+const rawAdminUsername = (import.meta.env.ADMIN_USERNAME ?? "").trim();
+const rawAdminPassword = (import.meta.env.ADMIN_PASSWORD ?? "").trim();
+const configuredTtl = Number(import.meta.env.ADMIN_SESSION_TTL_MINUTES ?? 480);
+const adminSessionTtlMinutes = Number.isFinite(configuredTtl) ? Math.max(5, Math.floor(configuredTtl)) : 480;
+
+const adminAuthConfigured = rawAdminUsername.length > 0 && rawAdminPassword.length > 0;
+const adminCredentialHash = adminAuthConfigured ? buildAdminCredentialHash(rawAdminUsername, rawAdminPassword) : "";
+
+// Fetch all products at build time
+const allProducts = await getProducts();
+const inStockProducts = allProducts.filter(p => p.stock_status !== "outofstock");
+const outOfStockProducts = allProducts.filter(p => p.stock_status === "outofstock");
+const flashProducts = allProducts.filter(p => p.flash);
+const popularProducts = allProducts.filter(p => p.is_popular);
+
+// Build JSON index for client-side search/filter
+const productIndex = allProducts.map(p => ({
+  id: p.id,
+  name: p.name,
+  slug: p.slug,
+  image: p.images[0]?.src ?? "",
+  regularPrice: p.regular_price,
+  salePrice: p.sale_price,
+  stockStatus: p.stock_status,
+  categories: p.categories,
+  flash: p.flash,
+  isPopular: p.is_popular,
+  createdAt: p.created_at ?? "",
+}));
+---
+
+<AdminLayout title={title} description={description} activePage="products">
+  <section
+    data-admin-products
+    data-admin-auth-configured={adminAuthConfigured ? "true" : "false"}
+    data-admin-credential-hash={adminCredentialHash}
+    data-admin-session-ttl={String(adminSessionTtlMinutes)}
+  >
+    <header class="admin-header">
+      <div class="admin-header__left">
+        <h1>Danh sách sản phẩm</h1>
+        <p>Tổng quan các sản phẩm đã render trên website.</p>
+      </div>
+    </header>
+
+    <!-- STATS GRID -->
+    <div class="admin-stats-grid">
+      <article class="stat-card">
+        <div class="stat-card__icon bg-blue">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+            <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+            <line x1="12" y1="22.08" x2="12" y2="12"></line>
+          </svg>
+        </div>
+        <div class="stat-card__info">
+          <p>Tổng sản phẩm</p>
+          <strong>{allProducts.length}</strong>
+        </div>
+      </article>
+
+      <article class="stat-card">
+        <div class="stat-card__icon bg-green">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+          </svg>
+        </div>
+        <div class="stat-card__info">
+          <p>Còn hàng</p>
+          <strong>{inStockProducts.length}</strong>
+        </div>
+      </article>
+
+      <article class="stat-card">
+        <div class="stat-card__icon bg-orange">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="15" y1="9" x2="9" y2="15"></line>
+            <line x1="9" y1="9" x2="15" y2="15"></line>
+          </svg>
+        </div>
+        <div class="stat-card__info">
+          <p>Hết hàng</p>
+          <strong>{outOfStockProducts.length}</strong>
+        </div>
+      </article>
+
+      <article class="stat-card">
+        <div class="stat-card__icon bg-purple">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+          </svg>
+        </div>
+        <div class="stat-card__info">
+          <p>Flash Sale</p>
+          <strong>{flashProducts.length}</strong>
+        </div>
+      </article>
+    </div>
+
+    <!-- TABLE CARD -->
+    <div class="admin-content-card">
+      <div class="admin-controls">
+        <div class="search-field">
+          <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="search" placeholder="Tìm theo tên sản phẩm, slug..." data-product-search autocomplete="off" />
+        </div>
+        <div class="filter-field">
+          <select data-product-filter aria-label="Lọc theo tình trạng">
+            <option value="all">Tất cả</option>
+            <option value="instock">Còn hàng</option>
+            <option value="outofstock">Hết hàng</option>
+            <option value="flash">Flash Sale</option>
+            <option value="popular">Nổi bật</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table class="admin-table product-table">
+          <thead>
+            <tr>
+              <th>Ảnh</th>
+              <th>Tên sản phẩm</th>
+              <th>Slug</th>
+              <th>Giá</th>
+              <th>Tình trạng</th>
+              <th>Tags</th>
+              <th class="cell-action">Link</th>
+            </tr>
+          </thead>
+          <tbody data-product-table-body>
+            {allProducts.map(p => {
+              const displayPrice = p.sale_price ?? p.regular_price;
+              const image = p.images[0]?.src ?? "";
+              return (
+                <tr data-stock={p.stock_status} data-flash={p.flash ? "1" : "0"} data-popular={p.is_popular ? "1" : "0"}>
+                  <td class="cell-thumb">
+                    {image ? (
+                      <img src={image} alt={p.name} class="product-thumb" loading="lazy" />
+                    ) : (
+                      <div class="product-thumb-empty">📦</div>
+                    )}
+                  </td>
+                  <td>
+                    <strong class="product-name-cell">{p.name}</strong>
+                  </td>
+                  <td class="cell-slug">
+                    <code>{p.slug}</code>
+                  </td>
+                  <td>
+                    <div class="price-cell">
+                      <strong class={p.sale_price ? "price-sale" : ""}>{formatCurrency(displayPrice)}</strong>
+                      {p.sale_price && <s class="price-original">{formatCurrency(p.regular_price)}</s>}
+                    </div>
+                  </td>
+                  <td>
+                    <span class={`status-pill is-${p.stock_status === "outofstock" ? "cancelled" : "completed"}`}>
+                      {p.stock_status === "outofstock" ? "Hết hàng" : "Còn hàng"}
+                    </span>
+                  </td>
+                  <td class="cell-tags">
+                    {p.flash && <span class="tag tag--red">⚡ Flash</span>}
+                    {p.is_popular && <span class="tag tag--orange">🔥 Hot</span>}
+                    {!p.flash && !p.is_popular && <span class="tag tag--gray">—</span>}
+                  </td>
+                  <td class="cell-action">
+                    <a href={`/products/${p.slug}/`} target="_blank" class="btn-view-detail" title="Xem trang sản phẩm">
+                      Xem ↗
+                    </a>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+
+        <!-- Mobile card view -->
+        <div class="admin-mobile-cards" data-product-mobile-cards>
+          {allProducts.map(p => {
+            const displayPrice = p.sale_price ?? p.regular_price;
+            const image = p.images[0]?.src ?? "";
+            return (
+              <div class="mobile-card product-mobile-card" data-stock={p.stock_status} data-flash={p.flash ? "1" : "0"} data-popular={p.is_popular ? "1" : "0"}>
+                <div class="product-mobile-card__header">
+                  {image ? (
+                    <img src={image} alt={p.name} class="product-mobile-thumb" loading="lazy" />
+                  ) : (
+                    <div class="product-mobile-thumb-empty">📦</div>
+                  )}
+                  <div class="product-mobile-card__info">
+                    <strong>{p.name}</strong>
+                    <code class="product-mobile-slug">{p.slug}</code>
+                  </div>
+                </div>
+                <div class="mobile-card__row">
+                  <span class="mobile-card__label">Giá</span>
+                  <span class="mobile-card__value is-total">{formatCurrency(displayPrice)}</span>
+                </div>
+                <div class="mobile-card__row">
+                  <span class="mobile-card__label">Tình trạng</span>
+                  <span class={`status-pill is-${p.stock_status === "outofstock" ? "cancelled" : "completed"}`}>
+                    {p.stock_status === "outofstock" ? "Hết hàng" : "Còn hàng"}
+                  </span>
+                </div>
+                <div class="mobile-card__row">
+                  <span class="mobile-card__label">Tags</span>
+                  <span class="mobile-card__value">
+                    {p.flash && "⚡ Flash "}
+                    {p.is_popular && "🔥 Hot"}
+                    {!p.flash && !p.is_popular && "—"}
+                  </span>
+                </div>
+                <div class="mobile-card__footer">
+                  <a href={`/products/${p.slug}/`} target="_blank" class="btn-view-detail">Xem trang ↗</a>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div class="admin-empty-state" data-product-empty hidden>
+          <div class="empty-icon">📦</div>
+          <h3>Không tìm thấy sản phẩm</h3>
+          <p>Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</AdminLayout>
+
+<script>
+  import { clearAdminSession, isAdminSessionValid } from "../../scripts/admin-auth";
+
+  const page = document.querySelector<HTMLElement>("[data-admin-products]");
+
+  if (page) {
+    const authConfigured = page.dataset.adminAuthConfigured === "true";
+    const credentialHash = (page.dataset.adminCredentialHash ?? "").trim();
+
+    const logoutBtn = document.querySelector<HTMLAnchorElement>("[data-admin-logout]");
+    const logoutBtnMobile = document.querySelector<HTMLAnchorElement>("[data-admin-logout-mobile]");
+
+    const handleLogout = (e: Event) => {
+      e.preventDefault();
+      clearAdminSession();
+      window.location.href = "/admin/login?logout=1";
+    };
+    logoutBtn?.addEventListener("click", handleLogout);
+    logoutBtnMobile?.addEventListener("click", handleLogout);
+
+    if (!authConfigured || !credentialHash || !isAdminSessionValid(credentialHash)) {
+      window.location.href = "/admin/login" + (authConfigured ? "" : "?error=config");
+    } else {
+      const searchInput = page.querySelector<HTMLInputElement>("[data-product-search]");
+      const filterSelect = page.querySelector<HTMLSelectElement>("[data-product-filter]");
+      const tableBody = page.querySelector<HTMLElement>("[data-product-table-body]");
+      const mobileCardsContainer = page.querySelector<HTMLElement>("[data-product-mobile-cards]");
+      const emptyNode = page.querySelector<HTMLElement>("[data-product-empty]");
+
+      const allRows = tableBody ? Array.from(tableBody.querySelectorAll("tr")) : [];
+      const allCards = mobileCardsContainer ? Array.from(mobileCardsContainer.querySelectorAll(".product-mobile-card")) : [];
+
+      const normalizeText = (text: string) =>
+        text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d");
+
+      const filterProducts = () => {
+        const kw = normalizeText(searchInput?.value.trim() ?? "");
+        const filter = filterSelect?.value ?? "all";
+
+        let visibleCount = 0;
+
+        // Process both table rows and mobile cards simultaneously
+        for (let i = 0; i < allRows.length; i++) {
+          const row = allRows[i];
+          const card = allCards[i];
+          const stock = row.dataset.stock ?? "";
+          const flash = row.dataset.flash === "1";
+          const popular = row.dataset.popular === "1";
+          const textContent = normalizeText(row.textContent ?? "");
+
+          let show = true;
+
+          // Filter
+          if (filter === "instock" && stock === "outofstock") show = false;
+          if (filter === "outofstock" && stock !== "outofstock") show = false;
+          if (filter === "flash" && !flash) show = false;
+          if (filter === "popular" && !popular) show = false;
+
+          // Search
+          if (show && kw && !textContent.includes(kw)) show = false;
+
+          row.style.display = show ? "" : "none";
+          if (card) card.style.display = show ? "" : "none";
+          if (show) visibleCount++;
+        }
+
+        if (emptyNode) emptyNode.hidden = visibleCount > 0;
+      };
+
+      searchInput?.addEventListener("input", filterProducts);
+      filterSelect?.addEventListener("change", filterProducts);
+    }
+  }
+</script>
+
+<style>
+  /* ── PRODUCT TABLE SPECIFICS ───────────────────────────── */
+  .product-table {
+    min-width: 900px;
+  }
+
+  .cell-thumb {
+    width: 60px;
+  }
+
+  .product-thumb {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    object-fit: cover;
+    border: 1px solid #e8edf3;
+  }
+
+  .product-thumb-empty {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    background: #f1f5f9;
+    display: grid;
+    place-items: center;
+    font-size: 1.4rem;
+  }
+
+  .product-name-cell {
+    color: #0f172a;
+    font-size: 0.88rem;
+    font-weight: 700;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    max-width: 260px;
+  }
+
+  .cell-slug code {
+    font-family: "JetBrains Mono", "Fira Code", monospace;
+    font-size: 0.78rem;
+    background: #f1f5f9;
+    color: #475569;
+    padding: 3px 8px;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+    word-break: break-all;
+  }
+
+  .price-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .price-cell strong {
+    font-size: 0.88rem;
+    font-weight: 800;
+    color: #1d4ed8;
+  }
+
+  .price-cell strong.price-sale {
+    color: #dc2626;
+  }
+
+  .price-original {
+    font-size: 0.76rem;
+    color: #94a3b8;
+  }
+
+  .cell-tags {
+    white-space: nowrap;
+  }
+
+  .tag {
+    display: inline-flex;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 700;
+  }
+
+  .tag--red {
+    background: #fef2f2;
+    color: #dc2626;
+  }
+
+  .tag--orange {
+    background: #fff7ed;
+    color: #ea580c;
+  }
+
+  .tag--gray {
+    background: transparent;
+    color: #cbd5e1;
+  }
+
+  /* ── MOBILE PRODUCT CARDS ──────────────────────────────── */
+  .product-mobile-card__header {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+
+  .product-mobile-thumb {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    object-fit: cover;
+    border: 1px solid #e8edf3;
+    flex-shrink: 0;
+  }
+
+  .product-mobile-thumb-empty {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    background: #f1f5f9;
+    display: grid;
+    place-items: center;
+    font-size: 1.6rem;
+    flex-shrink: 0;
+  }
+
+  .product-mobile-card__info {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .product-mobile-card__info strong {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #0f172a;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .product-mobile-slug {
+    font-family: "JetBrains Mono", "Fira Code", monospace;
+    font-size: 0.72rem;
+    background: #f1f5f9;
+    color: #64748b;
+    padding: 2px 6px;
+    border-radius: 4px;
+    word-break: break-all;
+    display: inline-block;
+    max-width: 100%;
+  }
+
+  /* Link button for both table and mobile */
+  a.btn-view-detail {
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+</style>

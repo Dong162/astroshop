@@ -1,6 +1,6 @@
 ---
 import { buildAdminCredentialHash } from "../../lib/admin-hash";
-import MainLayout from "../../layouts/MainLayout.astro";
+import AdminLayout from "../../layouts/AdminLayout.astro";
 import { buildPageTitle, SITE_NAME } from "../../lib/seo";
 
 const title = buildPageTitle("Quản lý đơn hàng");
@@ -15,213 +15,138 @@ const adminAuthConfigured = rawAdminUsername.length > 0 && rawAdminPassword.leng
 const adminCredentialHash = adminAuthConfigured ? buildAdminCredentialHash(rawAdminUsername, rawAdminPassword) : "";
 ---
 
-<MainLayout title={title} description={description} noindex>
+<AdminLayout title={title} description={description} activePage="orders">
   <section
-    class="admin-dashboard"
     data-admin-orders
     data-admin-auth-configured={adminAuthConfigured ? "true" : "false"}
     data-admin-credential-hash={adminCredentialHash}
     data-admin-session-ttl={String(adminSessionTtlMinutes)}
   >
-    <!-- MOBILE TOP BAR -->
-    <div class="admin-mobile-topbar">
-      <button type="button" class="admin-mobile-topbar__toggle" data-sidebar-toggle aria-label="Mở menu">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-      </button>
-      <div class="admin-mobile-topbar__brand">
-        <div class="brand__mark brand__mark--sm">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-        </div>
-        <strong>Đông Admin</strong>
+    <header class="admin-header">
+      <div class="admin-header__left">
+        <h1>Danh sách đơn hàng</h1>
+        <p>Theo dõi và cập nhật trạng thái xử lý đơn hàng.</p>
       </div>
-      <a href="/admin/login?logout=1" class="admin-mobile-topbar__logout" data-admin-logout-mobile aria-label="Đăng xuất">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-      </a>
-    </div>
-
-    <!-- SIDEBAR OVERLAY (mobile) -->
-    <div class="admin-sidebar-overlay" data-sidebar-overlay hidden></div>
-
-    <!-- SIDEBAR -->
-    <aside class="admin-sidebar" data-sidebar aria-label="Menu quản trị">
-      <div class="admin-sidebar__logo">
-        <div class="brand__mark brand__mark--sm">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+      <div class="admin-header__right">
+        <div class="sync-status" data-admin-last-sync>Đang kết nối...</div>
+        <button type="button" class="btn-refresh" data-admin-refresh title="Làm mới dữ liệu">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <polyline points="1 20 1 14 7 14"></polyline>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
           </svg>
-        </div>
-        <div class="brand__text">
-          <strong>Đông Admin</strong>
-          <span class="brand__tagline">Hệ thống quản lý</span>
-        </div>
-        <button type="button" class="admin-sidebar__close" data-sidebar-close aria-label="Đóng menu">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
+    </header>
 
-      <nav class="admin-nav">
-        <a href="/admin/orders" class="admin-nav__item active" aria-current="page">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-            <line x1="3" y1="9" x2="21" y2="9"></line>
-            <line x1="9" y1="21" x2="9" y2="9"></line>
-          </svg>
-          <span>Đơn hàng</span>
-        </a>
-        <a href="/admin/vouchers" class="admin-nav__item">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
-            <line x1="7" y1="7" x2="7.01" y2="7"></line>
-          </svg>
-          <span>Mã giảm giá</span>
-        </a>
-        <a href="/" class="admin-nav__item">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-            <polyline points="9 22 9 12 15 12 15 22"></polyline>
-          </svg>
-          <span>Xem cửa hàng</span>
-        </a>
-      </nav>
+    <div class="admin-status-bar" data-admin-status hidden></div>
 
-      <div class="admin-sidebar__footer">
-        <a href="/admin/login?logout=1" class="admin-logout-btn" data-admin-logout>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-            <polyline points="16 17 21 12 16 7"></polyline>
-            <line x1="21" y1="12" x2="9" y2="12"></line>
+    <!-- STATS GRID -->
+    <div class="admin-stats-grid">
+      <article class="stat-card">
+        <div class="stat-card__icon bg-blue">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
           </svg>
-          <span>Đăng xuất</span>
-        </a>
-      </div>
-    </aside>
-
-    <!-- MAIN CONTENT -->
-    <main class="admin-main">
-      <header class="admin-header">
-        <div class="admin-header__left">
-          <h1>Danh sách đơn hàng</h1>
-          <p>Theo dõi và cập nhật trạng thái xử lý đơn hàng.</p>
         </div>
-        <div class="admin-header__right">
-          <div class="sync-status" data-admin-last-sync>Đang kết nối...</div>
-          <button type="button" class="btn-refresh" data-admin-refresh title="Làm mới dữ liệu">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="23 4 23 10 17 10"></polyline>
-              <polyline points="1 20 1 14 7 14"></polyline>
-              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-            </svg>
-          </button>
+        <div class="stat-card__info">
+          <p>Tổng số đơn</p>
+          <strong data-stat-total>0</strong>
         </div>
-      </header>
+      </article>
 
-      <div class="admin-status-bar" data-admin-status hidden></div>
-
-      <!-- STATS GRID -->
-      <div class="admin-stats-grid">
-        <article class="stat-card">
-          <div class="stat-card__icon bg-blue">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-              <line x1="16" y1="2" x2="16" y2="6"></line>
-              <line x1="8" y1="2" x2="8" y2="6"></line>
-              <line x1="3" y1="10" x2="21" y2="10"></line>
-            </svg>
-          </div>
-          <div class="stat-card__info">
-            <p>Tổng số đơn</p>
-            <strong data-stat-total>0</strong>
-          </div>
-        </article>
-
-        <article class="stat-card">
-          <div class="stat-card__icon bg-orange">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"></circle>
-              <polyline points="12 6 12 12 16 14"></polyline>
-            </svg>
-          </div>
-          <div class="stat-card__info">
-            <p>Chờ xử lý</p>
-            <strong data-stat-pending>0</strong>
-          </div>
-        </article>
-
-        <article class="stat-card">
-          <div class="stat-card__icon bg-green">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-              <polyline points="22 4 12 14.01 9 11.01"></polyline>
-            </svg>
-          </div>
-          <div class="stat-card__info">
-            <p>Đã hoàn tất</p>
-            <strong data-stat-completed>0</strong>
-          </div>
-        </article>
-
-        <article class="stat-card">
-          <div class="stat-card__icon bg-purple">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="12" y1="1" x2="12" y2="23"></line>
-              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-            </svg>
-          </div>
-          <div class="stat-card__info">
-            <p>Doanh thu</p>
-            <strong data-stat-revenue>0 ₫</strong>
-          </div>
-        </article>
-      </div>
-
-      <!-- TABLE CARD -->
-      <div class="admin-content-card">
-        <div class="admin-controls">
-          <div class="search-field">
-            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
-            <input type="search" placeholder="Tìm tên khách, SĐT, mã đơn..." data-admin-search autocomplete="off" />
-          </div>
-          <div class="filter-field">
-            <select data-admin-filter aria-label="Lọc theo trạng thái">
-              <option value="all">Tất cả trạng thái</option>
-              <option value="pending">Chờ xử lý</option>
-              <option value="processing">Đang xử lý</option>
-              <option value="shipping">Đang giao</option>
-              <option value="completed">Hoàn tất</option>
-              <option value="cancelled">Đã hủy</option>
-            </select>
-          </div>
+      <article class="stat-card">
+        <div class="stat-card__icon bg-orange">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
         </div>
+        <div class="stat-card__info">
+          <p>Chờ xử lý</p>
+          <strong data-stat-pending>0</strong>
+        </div>
+      </article>
 
-        <div class="table-container">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th class="col-id">Mã đơn</th>
-                <th class="col-customer">Khách hàng</th>
-                <th class="col-total">Tổng tiền</th>
-                <th class="col-status">Trạng thái</th>
-                <th class="col-created">Ngày tạo</th>
-                <th class="col-action">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody data-admin-table-body>
-              <!-- Rows injected by JS -->
-            </tbody>
-          </table>
+      <article class="stat-card">
+        <div class="stat-card__icon bg-green">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+          </svg>
+        </div>
+        <div class="stat-card__info">
+          <p>Đã hoàn tất</p>
+          <strong data-stat-completed>0</strong>
+        </div>
+      </article>
 
-          <div class="admin-empty-state" data-admin-empty hidden>
-            <div class="empty-icon">📂</div>
-            <h3>Không tìm thấy đơn hàng</h3>
-            <p>Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm để xem thêm kết quả.</p>
-          </div>
+      <article class="stat-card">
+        <div class="stat-card__icon bg-purple">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="1" x2="12" y2="23"></line>
+            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+          </svg>
+        </div>
+        <div class="stat-card__info">
+          <p>Doanh thu</p>
+          <strong data-stat-revenue>0 ₫</strong>
+        </div>
+      </article>
+    </div>
+
+    <!-- TABLE CARD -->
+    <div class="admin-content-card">
+      <div class="admin-controls">
+        <div class="search-field">
+          <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="search" placeholder="Tìm tên khách, SĐT, mã đơn..." data-admin-search autocomplete="off" />
+        </div>
+        <div class="filter-field">
+          <select data-admin-filter aria-label="Lọc theo trạng thái">
+            <option value="all">Tất cả trạng thái</option>
+            <option value="pending">Chờ xử lý</option>
+            <option value="processing">Đang xử lý</option>
+            <option value="shipping">Đang giao</option>
+            <option value="completed">Hoàn tất</option>
+            <option value="cancelled">Đã hủy</option>
+          </select>
         </div>
       </div>
-    </main>
+
+      <div class="table-container">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th class="col-id">Mã đơn</th>
+              <th class="col-customer">Khách hàng</th>
+              <th class="col-total">Tổng tiền</th>
+              <th class="col-status">Trạng thái</th>
+              <th class="col-created">Ngày tạo</th>
+              <th class="col-action">Thao tác</th>
+            </tr>
+          </thead>
+          <tbody data-admin-table-body>
+            <!-- Rows injected by JS -->
+          </tbody>
+        </table>
+
+        <!-- Mobile card view -->
+        <div class="admin-mobile-cards" data-admin-mobile-cards></div>
+
+        <div class="admin-empty-state" data-admin-empty hidden>
+          <div class="empty-icon">📂</div>
+          <h3>Không tìm thấy đơn hàng</h3>
+          <p>Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm để xem thêm kết quả.</p>
+        </div>
+      </div>
+    </div>
 
     <!-- ROW TEMPLATE -->
     <template data-admin-row-template>
@@ -253,15 +178,15 @@ const adminCredentialHash = adminAuthConfigured ? buildAdminCredentialHash(rawAd
     </template>
 
     <!-- ORDER DETAIL MODAL -->
-    <div class="order-detail-modal" data-order-modal hidden>
-      <button type="button" class="order-detail-modal__backdrop" data-order-modal-close aria-label="Đóng"></button>
-      <div class="order-detail-modal__panel" role="dialog" aria-modal="true" aria-labelledby="order-detail-title">
-        <div class="order-detail-modal__header">
+    <div class="admin-modal" data-order-modal hidden>
+      <button type="button" class="admin-modal__backdrop" data-order-modal-close aria-label="Đóng"></button>
+      <div class="admin-modal__panel" role="dialog" aria-modal="true" aria-labelledby="order-detail-title">
+        <div class="admin-modal__header">
           <h3 id="order-detail-title">Chi tiết đơn hàng <span data-detail-order-id></span></h3>
-          <button type="button" class="order-detail-modal__close" data-order-modal-close aria-label="Đóng popup">✕</button>
+          <button type="button" class="admin-modal__close" data-order-modal-close aria-label="Đóng popup">✕</button>
         </div>
 
-        <div class="order-detail-modal__body">
+        <div class="admin-modal__body">
           <div class="detail-grid">
             <div class="detail-field">
               <span>Khách hàng</span>
@@ -324,7 +249,7 @@ const adminCredentialHash = adminAuthConfigured ? buildAdminCredentialHash(rawAd
       </div>
     </div>
   </section>
-</MainLayout>
+</AdminLayout>
 
 <script>
   import { clearAdminSession, isAdminSessionValid } from "../../scripts/admin-auth";
@@ -434,6 +359,7 @@ const adminCredentialHash = adminAuthConfigured ? buildAdminCredentialHash(rawAd
     const refreshButton = page.querySelector<HTMLButtonElement>("[data-admin-refresh]");
     const lastSyncNode = page.querySelector<HTMLElement>("[data-admin-last-sync]");
     const tableBody = page.querySelector<HTMLElement>("[data-admin-table-body]");
+    const mobileCards = page.querySelector<HTMLElement>("[data-admin-mobile-cards]");
     const emptyNode = page.querySelector<HTMLElement>("[data-admin-empty]");
     const rowTemplate = page.querySelector<HTMLTemplateElement>("template[data-admin-row-template]");
 
@@ -461,7 +387,8 @@ const adminCredentialHash = adminAuthConfigured ? buildAdminCredentialHash(rawAd
     const statCompleted = page.querySelector<HTMLElement>("[data-stat-completed]");
     const statRevenue = page.querySelector<HTMLElement>("[data-stat-revenue]");
 
-    const logoutBtn = page.querySelector<HTMLAnchorElement>("[data-admin-logout]");
+    const logoutBtn = document.querySelector<HTMLAnchorElement>("[data-admin-logout]");
+    const logoutBtnMobile = document.querySelector<HTMLAnchorElement>("[data-admin-logout-mobile]");
 
     const authConfigured = page.dataset.adminAuthConfigured === "true";
     const credentialHash = (page.dataset.adminCredentialHash ?? "").trim();
@@ -595,6 +522,33 @@ const adminCredentialHash = adminAuthConfigured ? buildAdminCredentialHash(rawAd
         return f;
       };
 
+      const createMobileCard = (order: OrderRecord) => {
+        const card = document.createElement("div");
+        card.className = "mobile-card";
+        card.innerHTML = `
+          <div class="mobile-card__top">
+            <span class="mobile-card__id">#${order.id ?? "--"}</span>
+            <span class="status-pill is-${order.status}">${STATUS_LABELS[order.status] ?? "Khác"}</span>
+          </div>
+          <div class="mobile-card__row">
+            <span class="mobile-card__label">Khách hàng</span>
+            <span class="mobile-card__value">${order.customerName || "Khách lẻ"}</span>
+          </div>
+          <div class="mobile-card__row">
+            <span class="mobile-card__label">Tổng tiền</span>
+            <span class="mobile-card__value is-total">${currencyFormatter.format(order.total)}</span>
+          </div>
+          <div class="mobile-card__row">
+            <span class="mobile-card__label">Ngày tạo</span>
+            <span class="mobile-card__value">${formatDt(order.createdAt)}</span>
+          </div>
+          <div class="mobile-card__footer">
+            <button type="button" class="btn-view-detail" data-order-view data-order-id="${order.id ?? ""}">Xem chi tiết</button>
+          </div>
+        `;
+        return card;
+      };
+
       const renderOrders = () => {
         const kw = searchInput?.value.trim().toLowerCase() || "";
         const st = filterSelect?.value || "all";
@@ -607,46 +561,18 @@ const adminCredentialHash = adminAuthConfigured ? buildAdminCredentialHash(rawAd
         });
 
         renderStats(filtered);
+
+        // Desktop table
         if (tableBody) {
           tableBody.replaceChildren();
           filtered.forEach((o) => tableBody.append(createRow(o)));
         }
 
-        /* ── Mobile card view ── */
-        let mobileCards = page?.querySelector<HTMLElement>(".admin-table-mobile-cards");
-        if (!mobileCards) {
-          mobileCards = document.createElement("div");
-          mobileCards.className = "admin-table-mobile-cards";
-          const tableContainer = page?.querySelector(".table-container");
-          tableContainer?.appendChild(mobileCards);
+        // Mobile cards
+        if (mobileCards) {
+          mobileCards.replaceChildren();
+          filtered.forEach((o) => mobileCards.append(createMobileCard(o)));
         }
-        mobileCards.replaceChildren();
-        filtered.forEach((o) => {
-          const card = document.createElement("div");
-          card.className = "mobile-order-card";
-          card.innerHTML = `
-            <div class="mobile-order-card__top">
-              <span class="mobile-order-card__id">#${o.id ?? "--"}</span>
-              <span class="status-pill is-${o.status}">${STATUS_LABELS[o.status] ?? "Khác"}</span>
-            </div>
-            <div class="mobile-order-card__row">
-              <span class="mobile-order-card__label">Khách hàng</span>
-              <span class="mobile-order-card__value">${o.customerName || "Khách lẻ"}</span>
-            </div>
-            <div class="mobile-order-card__row">
-              <span class="mobile-order-card__label">Tổng tiền</span>
-              <span class="mobile-order-card__value is-total">${currencyFormatter.format(o.total)}</span>
-            </div>
-            <div class="mobile-order-card__row">
-              <span class="mobile-order-card__label">Ngày tạo</span>
-              <span class="mobile-order-card__value">${formatDt(o.createdAt)}</span>
-            </div>
-            <div class="mobile-order-card__footer">
-              <button type="button" class="btn-view-detail" data-order-view data-order-id="${o.id ?? ""}">Xem chi tiết</button>
-            </div>
-          `;
-          mobileCards!.appendChild(card);
-        });
 
         if (emptyNode) emptyNode.hidden = filtered.length > 0;
       };
@@ -703,635 +629,30 @@ const adminCredentialHash = adminAuthConfigured ? buildAdminCredentialHash(rawAd
       searchInput?.addEventListener("input", renderOrders);
       filterSelect?.addEventListener("change", renderOrders);
       refreshButton?.addEventListener("click", () => loadOrders(false));
-      logoutBtn?.addEventListener("click", (e) => {
+
+      const handleLogout = (e: Event) => {
         e.preventDefault();
         clearAdminSession();
         window.location.href = "/admin/login?logout=1";
-      });
+      };
+      logoutBtn?.addEventListener("click", handleLogout);
+      logoutBtnMobile?.addEventListener("click", handleLogout);
 
       loadOrders();
       setInterval(() => loadOrders(true), 60000);
-
-      /* ── Mobile sidebar toggle ── */
-      const sidebar = page.querySelector<HTMLElement>("[data-sidebar]");
-      const overlay = page.querySelector<HTMLElement>("[data-sidebar-overlay]");
-      const toggleBtn = page.querySelector<HTMLButtonElement>("[data-sidebar-toggle]");
-      const closeBtn = page.querySelector<HTMLButtonElement>("[data-sidebar-close]");
-      const logoutBtnMobile = page.querySelector<HTMLAnchorElement>("[data-admin-logout-mobile]");
-
-      const openSidebar = () => {
-        sidebar?.classList.add("is-open");
-        if (overlay) overlay.hidden = false;
-        document.body.classList.add("is-sidebar-open");
-      };
-      const closeSidebar = () => {
-        sidebar?.classList.remove("is-open");
-        if (overlay) overlay.hidden = true;
-        document.body.classList.remove("is-sidebar-open");
-      };
-
-      toggleBtn?.addEventListener("click", openSidebar);
-      closeBtn?.addEventListener("click", closeSidebar);
-      overlay?.addEventListener("click", closeSidebar);
-      logoutBtnMobile?.addEventListener("click", (e) => {
-        e.preventDefault();
-        clearAdminSession();
-        window.location.href = "/admin/login?logout=1";
-      });
     }
   }
 </script>
 
 <style>
-  /* ── RESET LAYOUT ─────────────────────────────────────── */
-  :global(body) {
-    background: #f1f5f9;
-    min-height: 100vh;
-  }
-
-  :global(body.is-modal-open) {
-    overflow: hidden;
-  }
-
-  /* Override MainLayout container for full-width admin */
-  :global(.main-shell) {
-    max-width: 100% !important;
-    padding: 0 !important;
-    margin: 0 !important;
-  }
-
-  /* ── DASHBOARD LAYOUT ─────────────────────────────────── */
-  .admin-dashboard {
-    display: flex;
-    min-height: 100vh;
-    font-family: "Be Vietnam Pro", "Inter", system-ui, sans-serif;
-  }
-
-  /* ── SIDEBAR ──────────────────────────────────────────── */
-  .admin-sidebar {
-    width: 256px;
-    background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
-    color: #fff;
-    display: flex;
-    flex-direction: column;
-    position: sticky;
-    top: 0;
-    height: 100vh;
-    flex-shrink: 0;
-    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.12);
-    z-index: 10;
-  }
-
-  .admin-sidebar__logo {
-    padding: 24px 20px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
-  }
-
-  .brand__mark {
-    width: 36px;
-    height: 36px;
-    background: linear-gradient(135deg, #3b82f6, #2563eb);
-    color: #fff;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
-    flex-shrink: 0;
-  }
-
-  .brand__mark--sm {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-  }
-
-  .brand__text strong {
-    display: block;
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: #fff;
-    line-height: 1.2;
-  }
-
-  .brand__tagline {
-    font-size: 0.7rem;
-    color: #64748b;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-  }
-
-  .admin-nav {
-    flex: 1;
-    padding: 16px 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .admin-nav__item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 11px 14px;
-    border-radius: 10px;
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: #94a3b8;
-    text-decoration: none;
-    transition: all 0.18s ease;
-  }
-
-  .admin-nav__item:hover {
-    background: rgba(255, 255, 255, 0.06);
-    color: #e2e8f0;
-  }
-
-  .admin-nav__item.active {
-    background: rgba(59, 130, 246, 0.18);
-    color: #93c5fd;
-    border: 1px solid rgba(59, 130, 246, 0.25);
-  }
-
-  .admin-sidebar__footer {
-    padding: 16px 12px;
-    border-top: 1px solid rgba(255, 255, 255, 0.07);
-  }
-
-  .admin-logout-btn {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 11px 14px;
-    width: 100%;
-    color: #f87171;
-    font-weight: 600;
-    font-size: 0.875rem;
-    border-radius: 10px;
-    text-decoration: none;
-    transition: background 0.18s ease;
-  }
-
-  .admin-logout-btn:hover {
-    background: rgba(239, 68, 68, 0.1);
-  }
-
-  /* ── MAIN CONTENT ─────────────────────────────────────── */
-  .admin-main {
-    flex: 1;
-    padding: 32px 36px;
-    overflow-y: auto;
-    min-width: 0;
-  }
-
-  /* ── HEADER ───────────────────────────────────────────── */
-  .admin-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    margin-bottom: 28px;
-    gap: 20px;
-  }
-
-  .admin-header h1 {
-    font-size: 1.75rem;
-    font-weight: 800;
-    color: #0f172a;
-    margin-bottom: 4px;
-    letter-spacing: -0.02em;
-  }
-
-  .admin-header p {
-    color: #64748b;
-    font-size: 0.9rem;
-    margin: 0;
-  }
-
-  .admin-header__right {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    flex-shrink: 0;
-  }
-
-  .sync-status {
-    font-size: 0.78rem;
-    color: #94a3b8;
-    font-weight: 500;
-    white-space: nowrap;
-  }
-
-  .btn-refresh {
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
-    border: 1px solid #e2e8f0;
-    background: #fff;
-    color: #64748b;
-    display: grid;
-    place-items: center;
-    cursor: pointer;
-    transition: all 0.2s;
-    flex-shrink: 0;
-  }
-
-  .btn-refresh:hover {
-    background: #eff6ff;
-    color: #2563eb;
-    border-color: #bfdbfe;
-  }
-
-  .btn-refresh.is-spinning svg {
-    animation: spin 0.7s linear infinite;
-  }
-
-  @keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-  }
-
-  /* ── STATUS BAR ───────────────────────────────────────── */
-  .admin-status-bar {
-    padding: 12px 18px;
-    border-radius: 12px;
-    font-weight: 600;
-    font-size: 0.875rem;
-    margin-bottom: 24px;
-    border: 1px solid transparent;
-  }
-
-  .admin-status-bar.is-info {
-    background: #eff6ff;
-    border-color: #bfdbfe;
-    color: #1d4ed8;
-  }
-
-  .admin-status-bar.is-error {
-    background: #fef2f2;
-    border-color: #fecaca;
-    color: #b91c1c;
-  }
-
-  /* ── STATS GRID ───────────────────────────────────────── */
-  .admin-stats-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 18px;
-    margin-bottom: 28px;
-  }
-
-  .stat-card {
-    background: #fff;
-    padding: 22px 20px;
-    border-radius: 18px;
-    border: 1px solid #e8edf3;
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
-    transition: box-shadow 0.2s, transform 0.2s;
-  }
-
-  .stat-card:hover {
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.07);
-    transform: translateY(-2px);
-  }
-
-  .stat-card__icon {
-    width: 50px;
-    height: 50px;
-    border-radius: 14px;
-    display: grid;
-    place-items: center;
-    flex-shrink: 0;
-  }
-
-  .stat-card__icon.bg-blue   { background: #dbeafe; color: #2563eb; }
-  .stat-card__icon.bg-orange { background: #ffedd5; color: #ea580c; }
-  .stat-card__icon.bg-green  { background: #dcfce7; color: #16a34a; }
-  .stat-card__icon.bg-purple { background: #f3e8ff; color: #9333ea; }
-
-  .stat-card__info p {
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: #64748b;
-    margin: 0 0 3px;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-  }
-
-  .stat-card__info strong {
-    font-size: 1.5rem;
-    font-weight: 800;
-    color: #0f172a;
-    letter-spacing: -0.02em;
-    line-height: 1;
-  }
-
-  /* ── CONTENT CARD ─────────────────────────────────────── */
-  .admin-content-card {
-    background: #fff;
-    border-radius: 20px;
-    border: 1px solid #e8edf3;
-    overflow: hidden;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
-  }
-
-  /* ── CONTROLS ─────────────────────────────────────────── */
-  .admin-controls {
-    padding: 18px 22px;
-    border-bottom: 1px solid #f1f5f9;
-    display: flex;
-    gap: 14px;
-    flex-wrap: wrap;
-    background: #fafbfd;
-  }
-
-  .search-field {
-    position: relative;
-    flex: 1;
-    min-width: 220px;
-    max-width: 380px;
-  }
-
-  .search-icon {
-    position: absolute;
-    left: 13px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #94a3b8;
-    pointer-events: none;
-  }
-
-  .search-field input {
-    width: 100%;
-    height: 42px;
-    padding: 0 14px 0 38px;
-    background: #fff;
-    border: 1.5px solid #e2e8f0;
-    border-radius: 11px;
-    font-size: 0.875rem;
-    font-family: inherit;
-    color: #0f172a;
-    outline: none;
-    transition: border-color 0.18s, box-shadow 0.18s;
-  }
-
-  .search-field input::placeholder {
-    color: #94a3b8;
-  }
-
-  .search-field input:focus {
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-  }
-
-  .filter-field select {
-    height: 42px;
-    padding: 0 14px;
-    background: #fff;
-    border: 1.5px solid #e2e8f0;
-    border-radius: 11px;
-    font-size: 0.875rem;
-    font-weight: 600;
-    font-family: inherit;
-    color: #334155;
-    cursor: pointer;
-    outline: none;
-    transition: border-color 0.18s;
-    appearance: none;
-    padding-right: 32px;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-  }
-
-  .filter-field select:focus {
-    border-color: #3b82f6;
-  }
-
-  /* ── TABLE ────────────────────────────────────────────── */
-  .table-container {
-    overflow-x: auto;
-  }
-
-  .admin-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.875rem;
-    min-width: 920px;
-  }
-
-  .admin-table th {
-    padding: 13px 20px;
-    text-align: left;
-    background: #f8fafc;
-    color: #64748b;
-    font-weight: 700;
-    font-size: 0.72rem;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    border-bottom: 1px solid #e8edf3;
-    white-space: nowrap;
-  }
-
-  .admin-table td {
-    padding: 15px 20px;
-    border-bottom: 1px solid #f1f5f9;
-    vertical-align: middle;
-  }
-
-  .admin-table tbody tr:last-child td {
-    border-bottom: none;
-  }
-
-  .admin-table tbody tr {
-    transition: background 0.12s;
-  }
-
-  .admin-table tbody tr:hover td {
-    background: #f8fbff;
-  }
-
-  /* Column widths */
+  /* ── Column widths ──────────────────────────────────── */
   .col-id       { width: 100px; }
   .col-total    { width: 140px; }
   .col-status   { width: 140px; }
   .col-created  { width: 165px; }
   .col-action   { width: 130px; }
 
-  .cell-id strong {
-    color: #475569;
-    font-family: "JetBrains Mono", "Fira Code", monospace;
-    font-size: 0.9rem;
-    font-weight: 700;
-  }
-
-  .cell-action { text-align: right; }
-
-  .customer-info { display: flex; flex-direction: column; gap: 2px; }
-  .customer-name { font-weight: 700; color: #0f172a; font-size: 0.9rem; }
-  .customer-contact { font-size: 0.78rem; color: #64748b; }
-
-  .text-blue {
-    color: #1d4ed8;
-    font-weight: 800;
-    font-size: 0.95rem;
-  }
-
-  /* ── STATUS PILLS ─────────────────────────────────────── */
-  .status-pill {
-    display: inline-flex;
-    align-items: center;
-    padding: 4px 11px;
-    border-radius: 999px;
-    font-size: 0.72rem;
-    font-weight: 700;
-    border: 1px solid transparent;
-    white-space: nowrap;
-  }
-
-  .status-pill.is-pending    { background: #fff7ed; color: #c2410c; border-color: #fed7aa; }
-  .status-pill.is-processing { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
-  .status-pill.is-shipping   { background: #ecfeff; color: #0e7490; border-color: #a5f3fc; }
-  .status-pill.is-completed  { background: #f0fdf4; color: #15803d; border-color: #bbf7d0; }
-  .status-pill.is-cancelled  { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
-
-  .created-at { color: #64748b; font-size: 0.82rem; }
-
-  /* ── VIEW DETAIL BUTTON ───────────────────────────────── */
-  .btn-view-detail {
-    height: 33px;
-    padding: 0 14px;
-    border-radius: 9px;
-    border: 1.5px solid #cbd5e1;
-    background: #fff;
-    color: #2563eb;
-    font-size: 0.8rem;
-    font-weight: 700;
-    font-family: inherit;
-    cursor: pointer;
-    transition: all 0.18s;
-    white-space: nowrap;
-  }
-
-  .btn-view-detail:hover {
-    border-color: #93c5fd;
-    background: #eff6ff;
-    color: #1d4ed8;
-  }
-
-  /* ── EMPTY STATE ──────────────────────────────────────── */
-  .admin-empty-state {
-    padding: 60px 40px;
-    text-align: center;
-  }
-
-  .empty-icon {
-    font-size: 3rem;
-    margin-bottom: 14px;
-    display: block;
-  }
-
-  .admin-empty-state h3 {
-    margin: 0 0 8px;
-    font-size: 1.1rem;
-    color: #0f172a;
-    font-weight: 700;
-  }
-
-  .admin-empty-state p {
-    color: #64748b;
-    font-size: 0.9rem;
-    margin: 0;
-  }
-
-  /* ── ORDER DETAIL MODAL ───────────────────────────────── */
-  /* IMPORTANT: use :not([hidden]) so CSS display doesn't override the hidden attr */
-  .order-detail-modal:not([hidden]) {
-    position: fixed;
-    inset: 0;
-    z-index: 1200;
-    display: grid;
-    place-items: center;
-    padding: 20px;
-  }
-
-  .order-detail-modal__backdrop {
-    position: absolute;
-    inset: 0;
-    border: none;
-    background: rgba(15, 23, 42, 0.55);
-    backdrop-filter: blur(4px);
-    cursor: pointer;
-  }
-
-  .order-detail-modal__panel {
-    position: relative;
-    width: min(740px, 100%);
-    max-height: min(88vh, 820px);
-    overflow-y: auto;
-    background: #fff;
-    border-radius: 22px;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 24px 64px rgba(2, 6, 23, 0.22);
-    animation: panelIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-
-  @keyframes panelIn {
-    from { opacity: 0; transform: scale(0.95) translateY(10px); }
-    to   { opacity: 1; transform: scale(1) translateY(0); }
-  }
-
-  .order-detail-modal__header {
-    position: sticky;
-    top: 0;
-    z-index: 1;
-    background: #fff;
-    border-bottom: 1px solid #f1f5f9;
-    padding: 18px 22px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .order-detail-modal__header h3 {
-    margin: 0;
-    font-size: 1.05rem;
-    font-weight: 800;
-    color: #0f172a;
-  }
-
-  .order-detail-modal__close {
-    width: 32px;
-    height: 32px;
-    border-radius: 9px;
-    border: 1px solid #e2e8f0;
-    background: #f8fafc;
-    color: #475569;
-    cursor: pointer;
-    font-size: 0.85rem;
-    display: grid;
-    place-items: center;
-    transition: all 0.15s;
-    flex-shrink: 0;
-  }
-
-  .order-detail-modal__close:hover {
-    background: #fee2e2;
-    border-color: #fecaca;
-    color: #b91c1c;
-  }
-
-  .order-detail-modal__body {
-    padding: 22px;
-  }
-
+  /* ── DETAIL MODAL (page-specific) ───────────────────── */
   .detail-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -1368,7 +689,7 @@ const adminCredentialHash = adminAuthConfigured ? buildAdminCredentialHash(rawAd
     margin: 20px 0;
   }
 
-  .order-detail-modal__body h4 {
+  h4 {
     font-size: 0.78rem;
     font-weight: 700;
     text-transform: uppercase;
@@ -1469,396 +790,9 @@ const adminCredentialHash = adminAuthConfigured ? buildAdminCredentialHash(rawAd
     font-size: 1.1rem;
   }
 
-  /* ── MOBILE TOP BAR ─────────────────────────────────── */
-  .admin-mobile-topbar {
-    display: none;
-    position: sticky;
-    top: 0;
-    z-index: 20;
-    background: linear-gradient(135deg, #0f172a, #1e293b);
-    color: #fff;
-    padding: 12px 16px;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .admin-mobile-topbar__toggle {
-    width: 38px;
-    height: 38px;
-    border-radius: 10px;
-    border: 1px solid rgba(255,255,255,0.12);
-    background: rgba(255,255,255,0.06);
-    color: #e2e8f0;
-    display: grid;
-    place-items: center;
-    cursor: pointer;
-    transition: all 0.18s;
-  }
-
-  .admin-mobile-topbar__toggle:hover {
-    background: rgba(255,255,255,0.12);
-  }
-
-  .admin-mobile-topbar__brand {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .admin-mobile-topbar__brand strong {
-    font-size: 0.95rem;
-    font-weight: 700;
-  }
-
-  .admin-mobile-topbar__logout {
-    width: 38px;
-    height: 38px;
-    border-radius: 10px;
-    display: grid;
-    place-items: center;
-    color: #f87171;
-    text-decoration: none;
-    transition: background 0.18s;
-  }
-
-  .admin-mobile-topbar__logout:hover {
-    background: rgba(239,68,68,0.12);
-  }
-
-  /* ── SIDEBAR OVERLAY ──────────────────────────────────── */
-  .admin-sidebar-overlay {
-    display: none;
-  }
-
-  .admin-sidebar__close {
-    display: none;
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    border: 1px solid rgba(255,255,255,0.12);
-    background: rgba(255,255,255,0.06);
-    color: #e2e8f0;
-    place-items: center;
-    cursor: pointer;
-    margin-left: auto;
-    flex-shrink: 0;
-  }
-
-  /* ── RESPONSIVE ───────────────────────────────────────── */
-  @media (max-width: 1280px) {
-    .admin-stats-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
-  }
-
-  @media (max-width: 1024px) {
-    .admin-sidebar {
-      width: 72px;
-    }
-
-    .admin-sidebar .brand__text,
-    .admin-nav__item span,
-    .admin-logout-btn span {
-      display: none;
-    }
-
-    .admin-sidebar__logo {
-      justify-content: center;
-      padding: 20px 12px;
-    }
-
-    .admin-nav {
-      padding: 12px 8px;
-    }
-
-    .admin-nav__item {
-      justify-content: center;
-      padding: 12px;
-    }
-
-    .admin-logout-btn {
-      justify-content: center;
-    }
-
-    .admin-main {
-      padding: 24px 20px;
-    }
-  }
-
   @media (max-width: 900px) {
-    :global(.utility-bar),
-    :global(.site-header),
-    :global(.site-footer),
-    :global(.mobile-footer-nav) {
-      display: none !important;
-    }
-
-    .admin-mobile-topbar {
-      display: flex;
-    }
-
-    .admin-sidebar {
-      position: fixed;
-      top: 0;
-      left: 0;
-      height: 100vh;
-      width: 280px;
-      z-index: 100;
-      transform: translateX(-100%);
-      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .admin-sidebar.is-open {
-      transform: translateX(0);
-    }
-
-    .admin-sidebar .brand__text,
-    .admin-nav__item span,
-    .admin-logout-btn span {
-      display: initial;
-    }
-
-    .admin-sidebar__logo {
-      justify-content: flex-start;
-      padding: 24px 20px;
-    }
-
-    .admin-sidebar__close {
-      display: grid;
-    }
-
-    .admin-nav {
-      padding: 16px 12px;
-    }
-
-    .admin-nav__item {
-      justify-content: flex-start;
-      padding: 11px 14px;
-    }
-
-    .admin-logout-btn {
-      justify-content: flex-start;
-    }
-
-    .admin-sidebar-overlay:not([hidden]) {
-      display: block;
-      position: fixed;
-      inset: 0;
-      z-index: 90;
-      background: rgba(15,23,42,0.5);
-      backdrop-filter: blur(2px);
-    }
-
-    :global(body.is-sidebar-open) {
-      overflow: hidden;
-    }
-
-    .admin-main {
-      padding: 20px 16px;
-    }
-
-    .admin-header {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 12px;
-    }
-
-    .admin-header h1 {
-      font-size: 1.35rem;
-    }
-
-    .admin-header__right {
-      width: 100%;
-      justify-content: space-between;
-    }
-
-    .admin-stats-grid {
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-
-    .stat-card {
-      padding: 16px 14px;
-      border-radius: 14px;
-      gap: 12px;
-    }
-
-    .stat-card__icon {
-      width: 42px;
-      height: 42px;
-      border-radius: 12px;
-    }
-
-    .stat-card__info p {
-      font-size: 0.7rem;
-    }
-
-    .stat-card__info strong {
-      font-size: 1.2rem;
-    }
-
-    .admin-controls {
-      flex-direction: column;
-      padding: 14px 16px;
-    }
-
-    .search-field {
-      max-width: none;
-      min-width: 0;
-    }
-
-    .filter-field {
-      width: 100%;
-    }
-
-    .filter-field select {
-      width: 100%;
-    }
-
-    /* Hide table on mobile, show card view */
-    .admin-table {
-      display: none;
-    }
-
-    .table-container {
-      overflow-x: visible;
-    }
-
-    /* Mobile card rows - injected via JS with data-mobile-cards */
-    .admin-table-mobile-cards {
-      display: grid;
-      gap: 14px;
-      padding: 0;
-    }
-
-    .mobile-order-card {
-      padding: 18px;
-      background: #fff;
-      border-radius: 18px;
-      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
-      display: grid;
-      gap: 12px;
-      border: 1px solid #edf2f7;
-    }
-
-    .mobile-order-card:last-child {
-      border-bottom: none;
-    }
-
-    .mobile-order-card__top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .mobile-order-card__id {
-      font-family: "JetBrains Mono", "Fira Code", monospace;
-      font-weight: 700;
-      color: #475569;
-      font-size: 0.88rem;
-    }
-
-    .mobile-order-card__row {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 10px;
-      align-items: center;
-      font-size: 0.88rem;
-    }
-
-    .mobile-order-card__label {
-      color: #64748b;
-      font-weight: 600;
-    }
-
-    .mobile-order-card__value {
-      color: #0f172a;
-      font-weight: 700;
-      text-align: right;
-      min-width: 0;
-    }
-
-    .mobile-order-card__value.is-total {
-      color: #1d4ed8;
-      font-weight: 800;
-    }
-
-    .mobile-order-card__footer {
-      display: flex;
-      justify-content: flex-end;
-      padding-top: 4px;
-    }
-
-    .mobile-order-card .btn-view-detail {
-      width: 100%;
-      padding: 10px 16px;
-    }
-
-    .admin-sidebar {
-      width: min(280px, 100%);
-      max-width: 280px;
-    }
-
-    .admin-main {
-      padding: 20px 16px 24px;
-    }
-
-    .admin-stats-grid {
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-
-    .admin-controls {
-      flex-direction: column;
-      gap: 12px;
-      padding: 14px 16px;
-    }
-
-    .filter-field,
-    .search-field {
-      width: 100%;
-      max-width: none;
-    }
-
-    /* Modal mobile */
-    .order-detail-modal:not([hidden]) {
-      padding: 0;
-    }
-
-    .order-detail-modal__panel {
-      width: 100%;
-      max-height: 100vh;
-      border-radius: 0;
-      height: 100vh;
-    }
-
     .detail-grid {
       grid-template-columns: 1fr;
-    }
-
-    .order-detail-modal__body {
-      padding: 16px;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .admin-stats-grid {
-      grid-template-columns: 1fr;
-      gap: 8px;
-    }
-
-    .stat-card {
-      padding: 14px 12px;
-    }
-
-    .stat-card__info strong {
-      font-size: 1.1rem;
-    }
-
-    .admin-header h1 {
-      font-size: 1.2rem;
     }
   }
 </style>

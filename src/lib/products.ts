@@ -155,38 +155,66 @@ export async function getProducts(): Promise<Product[]> {
     return sampleProducts;
   }
 
+  let allProducts: Product[] = [];
+  let page = 0;
+  const pageSize = 1000;
+  let hasMore = true;
+
   try {
     const baseUrl = supabaseUrl.endsWith("/") ? supabaseUrl.slice(0, -1) : supabaseUrl;
-    const endpoint = new URL(`${baseUrl}/rest/v1/${productsTable}`);
-    endpoint.searchParams.set("select", PRODUCT_COLUMNS);
-    endpoint.searchParams.set("status", "eq.publish");
-    endpoint.searchParams.set("order", "created_at.desc");
 
-    const response = await fetch(endpoint, {
-      headers: {
-        apikey: supabaseKey,
-        Authorization: `Bearer ${supabaseKey}`,
-        Accept: "application/json"
+    while (hasMore) {
+      const from = page * pageSize;
+      const to = from + pageSize - 1;
+
+      const endpoint = new URL(`${baseUrl}/rest/v1/${productsTable}`);
+      endpoint.searchParams.set("select", PRODUCT_COLUMNS);
+      endpoint.searchParams.set("status", "eq.publish");
+      endpoint.searchParams.set("order", "created_at.desc");
+
+      const response = await fetch(endpoint, {
+        headers: {
+          apikey: supabaseKey,
+          Authorization: `Bearer ${supabaseKey}`,
+          Accept: "application/json",
+          Range: `${from}-${to}`
+        }
+      });
+
+      if (!response.ok) {
+        const message = await response.text();
+        console.warn(`[products] Supabase request failed (batch ${page}): ${response.status} ${response.statusText} - ${message}`);
+        // If the first batch fails, return samples. If later batches fail, return what we have.
+        return allProducts.length > 0 ? allProducts : sampleProducts;
       }
-    });
 
-    if (!response.ok) {
-      const message = await response.text();
-      console.warn(`[products] Supabase request failed: ${response.status} ${response.statusText} - ${message}`);
-      return sampleProducts;
+      const rows = (await response.json()) as Record<string, unknown>[];
+      const batch = rows.map(normalizeProduct).filter((product) => product.status === "publish");
+      
+      allProducts = [...allProducts, ...batch];
+
+      // If we got fewer rows than requested, we've reached the end
+      if (rows.length < pageSize) {
+        hasMore = false;
+      } else {
+        page++;
+      }
+      
+      // Safety break to prevent infinite loops (max 100,000 products)
+      if (page > 100) {
+        console.warn("[products] Safety limit reached (100k products). Stopping fetch.");
+        hasMore = false;
+      }
     }
 
-    const rows = (await response.json()) as Record<string, unknown>[];
-    const products = rows.map(normalizeProduct).filter((product) => product.status === "publish");
-
-    if (products.length === 0) {
+    if (allProducts.length === 0) {
       console.warn("[products] Supabase returned 0 published products. Falling back to sample data.");
       return sampleProducts;
     }
 
-    return products;
+    return allProducts;
   } catch (error) {
     console.warn("[products] Failed to fetch Supabase products.", error);
-    return sampleProducts;
+    return allProducts.length > 0 ? allProducts : sampleProducts;
   }
 }
