@@ -111,15 +111,16 @@ const structuredData = [
 
     <div class="flash-scroll-wrap">
       <div class="flash-grid">
-        {flashDeals.map((product) => {
+        {flashDeals.map((product, index) => {
           const productUrl = buildProductUrl(product.slug);
           const image = toImageCdn(product.images[0]?.src ?? "https://placehold.co/500x500/f3f4f6/111827?text=Flash");
           const displayPrice = product.sale_price ?? product.regular_price;
+          const isLcp = index < 4;
 
           return (
             <article class="product-card">
               <a class="product-card__image" href={productUrl}>
-                <img src={image} alt={product.name} loading="lazy" />
+                <img src={image} alt={product.name} loading={isLcp ? "eager" : "lazy"} fetchpriority={isLcp ? "high" : "auto"} />
                 <div class="product-badge product-badge--red">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
                   Flash Sale

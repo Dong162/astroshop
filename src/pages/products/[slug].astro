@@ -101,6 +101,8 @@ const structuredData = [
           class="product-gallery__main"
           src={gallery[0].src}
           alt={product.name}
+          loading="eager"
+          fetchpriority="high"
         />
         {discountPercent > 0 && (
           <div class="gallery-discount-badge">-{discountPercent}%</div>
