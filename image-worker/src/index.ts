@@ -2,6 +2,7 @@
  * Image Worker Proxy & R2 Storage (V3 - Shared CDN)
  *
  * Flow: Request → CORS Preflight → Cache API → R2 → Origin Fetch → Store & Serve
+ * Auto-cleanup: Scheduled job deletes images unused for 30+ days
  *
  * Domain: images.dongtaphoa.com
  * Origin: r6i.pen.dropbuy.vn
@@ -14,6 +15,7 @@ export interface Env {
 const ORIGIN_HOST = "r6i.pen.dropbuy.vn";
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 const CACHE_TTL = 31536000; // 1 year
+const UNUSED_DAYS = 30; // Auto-delete after 30 days of no access
 const FAKE_USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 
@@ -31,6 +33,91 @@ function withCors(response: Response): Response {
     res.headers.set(k, v);
   }
   return res;
+}
+
+// ---------- Metadata & Cleanup ----------
+/**
+ * Update last-accessed timestamp for an image
+ * Prevents deletion of recently-used images
+ */
+async function updateLastAccessed(
+  bucket: R2Bucket,
+  key: string,
+  contentType?: string
+): Promise<void> {
+  try {
+    const now = Date.now();
+    await bucket.put(key, null, {
+      onlyIf: { etagMatches: undefined }, // Allow overwrite
+      customMetadata: {
+        lastAccessed: now.toString(),
+        lastAccessedDate: new Date(now).toISOString(),
+      },
+      httpMetadata: contentType ? { contentType } : undefined,
+    });
+  } catch (error) {
+    console.error(`Failed to update metadata for ${key}:`, error);
+  }
+}
+
+/**
+ * Delete images unused for 30+ days
+ * Runs as scheduled background job
+ */
+async function cleanupUnusedImages(bucket: R2Bucket): Promise<{
+  deleted: number;
+  errors: number;
+  examined: number;
+}> {
+  const now = Date.now();
+  const thirtyDaysMs = UNUSED_DAYS * 24 * 60 * 60 * 1000;
+  const cutoffTime = now - thirtyDaysMs;
+
+  let deleted = 0;
+  let errors = 0;
+  let examined = 0;
+  let cursor: string | undefined;
+
+  try {
+    // ✅ Paginate through all objects in R2
+    do {
+      const list = await bucket.list({ cursor, limit: 1000 });
+
+      for (const object of list.objects) {
+        examined++;
+        const lastAccessedStr =
+          object.customMetadata?.lastAccessed || object.uploadedDate;
+
+        if (!lastAccessedStr) continue;
+
+        const lastAccessTime = isNaN(Number(lastAccessedStr))
+          ? new Date(lastAccessedStr).getTime()
+          : Number(lastAccessedStr);
+
+        // Delete if not accessed in 30+ days
+        if (lastAccessTime < cutoffTime) {
+          try {
+            await bucket.delete(object.key);
+            deleted++;
+            console.log(`🗑️ Deleted unused image: ${object.key}`);
+          } catch (deleteError) {
+            errors++;
+            console.error(`❌ Cleanup error for ${object.key}:`, deleteError);
+          }
+        }
+      }
+
+      cursor = list.cursor;
+    } while (cursor);
+
+    console.log(
+      `✅ Cleanup complete: examined=${examined}, deleted=${deleted}, errors=${errors}`
+    );
+  } catch (error) {
+    console.error("❌ Cleanup job failed:", error);
+  }
+
+  return { deleted, errors, examined };
 }
 
 // ---------- Content-Type fallback ----------
@@ -90,6 +177,11 @@ export default {
 
       const response = new Response(r2Object.body, { headers });
 
+      // Update last accessed time (background)
+      ctx.waitUntil(
+        updateLastAccessed(env.IMAGES_BUCKET, key, r2Object.httpMetadata?.contentType)
+      );
+
       // Store in Cache API (background)
       ctx.waitUntil(cache.put(cacheKey, response.clone()));
 
@@ -139,10 +231,15 @@ export default {
     const contentType =
       originResponse.headers.get("content-type") ?? guessContentType(key);
 
-    // 5) Store in R2 (background)
+    // 5) Store in R2 (background) with metadata
+    const now = Date.now();
     ctx.waitUntil(
       env.IMAGES_BUCKET.put(key, body, {
         httpMetadata: { contentType },
+        customMetadata: {
+          lastAccessed: now.toString(),
+          lastAccessedDate: new Date(now).toISOString(),
+        },
       })
     );
 
@@ -158,5 +255,15 @@ export default {
     ctx.waitUntil(cache.put(cacheKey, response.clone()));
 
     return withCors(response);
+  },
+
+  /**
+   * Scheduled handler: Runs daily cleanup of unused images
+   * Configure in wrangler.toml with cron trigger: "0 2 * * *" (2 AM UTC daily)
+   */
+  async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
+    console.log("🧹 Starting scheduled cleanup job...");
+    const result = await cleanupUnusedImages(env.IMAGES_BUCKET);
+    console.log(`Cleanup result:`, result);
   },
 } satisfies ExportedHandler<Env>;
