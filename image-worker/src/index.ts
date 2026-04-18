@@ -1,8 +1,8 @@
 /**
- * Image Worker Proxy & R2 Storage (V3 - Shared CDN)
+ * Image Worker Proxy & R2 Storage (V2 - Optimized)
  *
  * Flow: Request → CORS Preflight → Cache API → R2 → Origin Fetch → Store & Serve
- * Cleanup: Removes images older than 30 days (based on R2 uploadedDate)
+ * Cleanup: R2 Object Lifecycle Rules (configured in Cloudflare Dashboard)
  *
  * Domain: images.dongtaphoa.com
  * Origin: r6i.pen.dropbuy.vn
@@ -15,7 +15,6 @@ export interface Env {
 const ORIGIN_HOST = "r6i.pen.dropbuy.vn";
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 const CACHE_TTL = 31536000; // 1 year
-const UNUSED_DAYS = 30; // Auto-delete after 30 days of no access
 const FAKE_USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 
@@ -33,64 +32,6 @@ function withCors(response: Response): Response {
     res.headers.set(k, v);
   }
   return res;
-}
-
-// ---------- Cleanup ----------
-/**
- * Delete images older than 30 days (based on R2 uploadedDate, no tracking needed)
- * No API cost for tracking - uses native R2 metadata
- */
-async function cleanupOldImages(bucket: R2Bucket): Promise<{
-  deleted: number;
-  errors: number;
-  examined: number;
-}> {
-  const now = Date.now();
-  const thirtyDaysMs = UNUSED_DAYS * 24 * 60 * 60 * 1000;
-  const cutoffTime = now - thirtyDaysMs;
-
-  let deleted = 0;
-  let errors = 0;
-  let examined = 0;
-  let cursor: string | undefined;
-
-  try {
-    // ✅ Paginate through all objects in R2
-    do {
-      const list = await bucket.list({ cursor, limit: 1000 });
-
-      for (const object of list.objects) {
-        examined++;
-        
-        // Use R2's native uploadedDate (no custom tracking needed)
-        const uploadTime = object.uploadedDate 
-          ? new Date(object.uploadedDate).getTime() 
-          : now;
-
-        // Delete if uploaded more than 30 days ago
-        if (uploadTime < cutoffTime) {
-          try {
-            await bucket.delete(object.key);
-            deleted++;
-            console.log(`🗑️ Deleted old image: ${object.key}`);
-          } catch (deleteError) {
-            errors++;
-            console.error(`❌ Cleanup error for ${object.key}:`, deleteError);
-          }
-        }
-      }
-
-      cursor = list.cursor;
-    } while (cursor);
-
-    console.log(
-      `✅ Cleanup complete: examined=${examined}, deleted=${deleted}, errors=${errors}`
-    );
-  } catch (error) {
-    console.error("❌ Cleanup job failed:", error);
-  }
-
-  return { deleted, errors, examined };
 }
 
 // ---------- Content-Type fallback ----------
@@ -113,22 +54,7 @@ function guessContentType(path: string): string {
 // ---------- Main handler ----------
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
-    // Check for admin cleanup endpoint: GET /admin/cleanup?token=xxx
     const url = new URL(request.url);
-    if (url.pathname === "/admin/cleanup") {
-      const token = url.searchParams.get("token");
-      const adminToken = "dongtaphoa-cleanup-secret"; // Thay bằng env variable in production
-      
-      if (request.method !== "POST" || token !== adminToken) {
-        return withCors(new Response("Unauthorized", { status: 401 }));
-      }
-      
-      console.log("🧹 Admin cleanup triggered...");
-      const result = await cleanupOldImages(env.IMAGES_BUCKET);
-      return withCors(new Response(JSON.stringify(result), {
-        headers: { "Content-Type": "application/json" }
-      }));
-    }
 
     // 1) CORS Preflight
     if (request.method === "OPTIONS") {
