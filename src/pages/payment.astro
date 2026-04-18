@@ -79,22 +79,13 @@ const shippingFee = Number(import.meta.env.PUBLIC_DEFAULT_SHIPPING_FEE ?? 25000)
                 </div>
               </label>
 
-              <label class="payment-method-option">
-                <input type="radio" name="method" value="bank" />
-                <div class="payment-method-card">
-                  <div class="payment-method-card__icon">🏦</div>
-                  <div>
-                    <strong>Chuyển khoản ngân hàng</strong>
-                    <p>Thông tin tài khoản sẽ được gửi qua email sau khi đặt hàng</p>
-                  </div>
-                </div>
-              </label>
+
             </div>
           </div>
 
           <p class="payment-error" data-payment-error hidden></p>
 
-          <div class="desktop-notice" style="margin-bottom: 16px; padding: 12px; background: #fee2e2; color: #dc2626; border-radius: 8px; text-align: center; font-weight: 700; font-size: 0.85rem;">
+          <div class="desktop-notice" style="margin-bottom: 16px; padding: 12px; background: #fee2e2; color: #dc2626; border-radius: 8px; text-align: center; font-weight: 600; font-size: 0.85rem;">
             ⚠️ QUÝ KHÁCH VUI LÒNG QUAY VIDEO KHI MỞ HÀNG ĐỂ ĐƯỢC HỖ TRỢ KHIẾU NẠI NẾU CÓ
           </div>
 
@@ -163,7 +154,7 @@ const shippingFee = Number(import.meta.env.PUBLIC_DEFAULT_SHIPPING_FEE ?? 25000)
     </div>
 
     <div class="payment-mobile-bar" data-payment-mobile-bar hidden style="flex-direction: column; align-items: stretch; gap: 6px; padding: 8px 18px calc(8px + env(safe-area-inset-bottom));">
-      <div style="text-align: center; color: #dc2626; font-size: 0.7rem; font-weight: 700; background: #fee2e2; padding: 4px 8px; border-radius: 6px; line-height: 1.2;">
+      <div style="text-align: center; color: #dc2626; font-size: 0.7rem; font-weight: 600; background: #fee2e2; padding: 4px 8px; border-radius: 6px; line-height: 1.2;">
         ⚠️ QUÝ KHÁCH VUI LÒNG QUAY VIDEO KHI MỞ HÀNG ĐỂ ĐƯỢC HỖ TRỢ KHIẾU NẠI NẾU CÓ
       </div>
       <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -654,7 +645,7 @@ const shippingFee = Number(import.meta.env.PUBLIC_DEFAULT_SHIPPING_FEE ?? 25000)
     border-radius: 10px;
     background: #eff6ff;
     color: #1d4ed8;
-    font-weight: 700;
+    font-weight: 600;
   }
 
   .payment-layout {
@@ -708,7 +699,7 @@ const shippingFee = Number(import.meta.env.PUBLIC_DEFAULT_SHIPPING_FEE ?? 25000)
 
   .form-label {
     font-size: 0.85rem;
-    font-weight: 600;
+    font-weight: 500;
   }
 
   .payment-form input,
@@ -716,7 +707,7 @@ const shippingFee = Number(import.meta.env.PUBLIC_DEFAULT_SHIPPING_FEE ?? 25000)
     padding: 10px 14px;
     border: 1px solid #e2e8f0;
     border-radius: 8px;
-    font-size: 1rem;
+    font-size: 16px; /* Hỗ trợ chống auto-zoom trên mobile */
   }
 
   .payment-methods {
@@ -751,7 +742,7 @@ const shippingFee = Number(import.meta.env.PUBLIC_DEFAULT_SHIPPING_FEE ?? 25000)
     color: #fff;
     border: none;
     border-radius: 10px;
-    font-weight: 700;
+    font-weight: 600;
     margin-top: 10px;
     display: inline-flex;
     justify-content: center;
@@ -761,7 +752,7 @@ const shippingFee = Number(import.meta.env.PUBLIC_DEFAULT_SHIPPING_FEE ?? 25000)
 
   .payment-error {
     color: #dc2626;
-    font-weight: 600;
+    font-weight: 500;
     margin-top: 10px;
   }
 
@@ -784,14 +775,14 @@ const shippingFee = Number(import.meta.env.PUBLIC_DEFAULT_SHIPPING_FEE ?? 25000)
       gap: 10px;
       align-items: stretch;
   }
-  .voucher-input-group input {
+   .voucher-input-group input {
       flex: 1;
       min-width: 0;
-      height: 46px;
-      padding: 0 14px;
+      height: 40px;
+      padding: 0 12px;
       border: 1px solid #e2e8f0;
       border-radius: 8px;
-      font-size: 1rem;
+      font-size: 0.9rem;
       outline: none;
       transition: border-color 0.2s;
   }
@@ -799,16 +790,16 @@ const shippingFee = Number(import.meta.env.PUBLIC_DEFAULT_SHIPPING_FEE ?? 25000)
       border-color: #2563eb;
   }
   .voucher-input-group button {
-      padding: 0 20px;
-      height: 46px;
+      padding: 0 16px;
+      height: 40px;
       background: #0f172a;
       color: #fff;
       border: none;
       border-radius: 8px;
-      font-weight: 600;
+      font-weight: 500;
+      font-size: 0.85rem;
       cursor: pointer;
       white-space: nowrap;
-      transition: background 0.2s;
       transition: background 0.2s;
   }
   .voucher-input-group button:hover {
@@ -831,6 +822,13 @@ const shippingFee = Number(import.meta.env.PUBLIC_DEFAULT_SHIPPING_FEE ?? 25000)
     padding: 20px;
     position: sticky;
     top: 100px;
+  }
+
+  .payment-summary__inner h2 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin: 0 0 12px;
+    color: #0f172a;
   }
 
   .payment-summary__count {
@@ -867,6 +865,7 @@ const shippingFee = Number(import.meta.env.PUBLIC_DEFAULT_SHIPPING_FEE ?? 25000)
 
   .payment-item__info h3 {
     font-size: 0.8rem;
+    font-weight: 400;
     margin: 0;
   }
 
@@ -886,7 +885,7 @@ const shippingFee = Number(import.meta.env.PUBLIC_DEFAULT_SHIPPING_FEE ?? 25000)
   .payment-summary__total-row {
     border-top: 1px dashed #e2e8f0;
     padding-top: 12px;
-    font-weight: 700;
+    font-weight: 600;
     font-size: 1.1rem;
   }
 
@@ -941,7 +940,7 @@ const shippingFee = Number(import.meta.env.PUBLIC_DEFAULT_SHIPPING_FEE ?? 25000)
     border: none;
     background: #16a34a;
     color: #fff;
-    font-weight: 700;
+    font-weight: 600;
   }
 
   .payment-mobile-bar__btn:disabled {
@@ -955,6 +954,14 @@ const shippingFee = Number(import.meta.env.PUBLIC_DEFAULT_SHIPPING_FEE ?? 25000)
 
     .payment-layout {
       grid-template-columns: 1fr;
+      gap: 32px;
+    }
+
+    .payment-summary__inner {
+      position: static;
+      border-radius: 12px;
+      box-shadow: none;
+      background: var(--surface-soft);
     }
 
     .form-grid {
