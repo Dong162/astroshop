@@ -2,6 +2,7 @@
 import MainLayout from "../layouts/MainLayout.astro";
 import { getProducts } from "../lib/products";
 import { buildPageTitle } from "../lib/seo";
+import { toImageCdn } from "../lib/image-cdn";
 
 const title = buildPageTitle("Tim kiem san pham");
 const description = "Trang tim kiem san pham theo tu khoa.";
@@ -19,8 +20,9 @@ function normalizeSearchText(value: string): string {
 }
 
 const searchIndex = activeProducts.map((product) => {
-  const image =
-    product.images[0]?.src ?? "https://placehold.co/800x800/eceff3/1b2430?text=Tap+Hoa+Tech";
+  const image = toImageCdn(
+    product.images[0]?.src ?? "https://placehold.co/800x800/eceff3/1b2430?text=Tap+Hoa+Tech"
+  );
   const displayPrice = product.sale_price ?? product.regular_price;
 
   return {

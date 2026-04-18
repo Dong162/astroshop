@@ -2,6 +2,7 @@
 import MainLayout from "../layouts/MainLayout.astro";
 import ProductCard from "../components/ProductCard.astro";
 import { formatCurrency, getProducts } from "../lib/products";
+import { toImageCdn } from "../lib/image-cdn";
 import {
   buildAbsoluteUrl,
   buildOrganizationJsonLd,
@@ -16,7 +17,7 @@ const flashDeals = activeProducts.filter((product) => product.flash).slice(0, 8)
 const hotProducts = [...activeProducts]
   .sort((a, b) => Number(b.is_popular) - Number(a.is_popular) || b.id - a.id)
   .slice(0, 12);
-const heroImage = flashDeals[0]?.images[0]?.src ?? hotProducts[0]?.images[0]?.src;
+const heroImage = toImageCdn(flashDeals[0]?.images[0]?.src ?? hotProducts[0]?.images[0]?.src ?? "");
 const siteUrl = Astro.site?.toString() ?? "https://example.com";
 const title = buildPageTitle("Phụ kiện công nghệ và deal mỗi ngày");
 const description =
@@ -112,7 +113,7 @@ const structuredData = [
       <div class="flash-grid">
         {flashDeals.map((product) => {
           const productUrl = buildProductUrl(product.slug);
-          const image = product.images[0]?.src ?? "https://placehold.co/500x500/f3f4f6/111827?text=Flash";
+          const image = toImageCdn(product.images[0]?.src ?? "https://placehold.co/500x500/f3f4f6/111827?text=Flash");
           const displayPrice = product.sale_price ?? product.regular_price;
 
           return (
@@ -251,7 +252,7 @@ const structuredData = [
     name: p.name,
     regularPrice: p.regular_price,
     salePrice: p.sale_price,
-    image: p.images[0]?.src ?? "",
+    image: toImageCdn(p.images[0]?.src ?? ""),
     flash: p.flash,
     isPopular: p.is_popular
   })))} />

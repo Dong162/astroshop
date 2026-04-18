@@ -1,0 +1,10 @@
+name = "image-proxy"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+
+# Custom domain: images.dongtaphoa.com
+# routes = [{ pattern = "images.dongtaphoa.com/*", zone_name = "dongtaphoa.com" }]
+
+[[r2_buckets]]
+binding = "IMAGES_BUCKET"
+bucket_name = "dongtaphoa-images"

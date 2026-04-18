@@ -1,4 +1,5 @@
 import type { Product } from "../types/product";
+import { toImageCdn } from "./image-cdn";
 
 export const SITE_NAME = import.meta.env.PUBLIC_SITE_NAME ?? "Đông Tạp Hóa";
 const DEFAULT_SITE_URL = import.meta.env.PUBLIC_SITE_URL ?? "https://dongtaphoa.vn";
@@ -108,7 +109,7 @@ export function buildProductJsonLd(product: Product, siteUrl: string) {
   const productUrl = buildAbsoluteUrl(`/products/${product.slug}/`, siteUrl);
   const imageUrls =
     product.images.length > 0
-      ? product.images.map((image) => buildAbsoluteUrl(image.src, siteUrl))
+      ? product.images.map((image) => buildAbsoluteUrl(toImageCdn(image.src), siteUrl))
       : [buildAbsoluteUrl("https://placehold.co/1200x1200/f3f4f6/111827?text=Đông+Tạp+Hóa", siteUrl)];
   const displayPrice = product.sale_price ?? product.regular_price;
 
