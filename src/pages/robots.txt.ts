@@ -2,7 +2,20 @@
 
 export const GET: APIRoute = ({ site }) => {
   const siteUrl = (site ?? new URL("https://example.com")).toString().replace(/\/$/, "");
-  const body = [`User-agent: *`, `Allow: /`, `Sitemap: ${siteUrl}/sitemap.xml`].join("\n");
+  const body = [
+    `User-agent: *`,
+    `Allow: /`,
+    `Allow: https://images.dongtaphoa.com/`,
+    ``,
+    `# Disallow admin and checkout pages`,
+    `Disallow: /admin/`,
+    `Disallow: /cart/`,
+    `Disallow: /payment/`,
+    `Disallow: /thank-you/`,
+    ``,
+    `# Sitemap`,
+    `Sitemap: ${siteUrl}/sitemap.xml`
+  ].join("\n");
 
   return new Response(body, {
     headers: {

@@ -4,8 +4,8 @@ import { getProducts } from "../lib/products";
 import { buildPageTitle } from "../lib/seo";
 import { toImageCdn } from "../lib/image-cdn";
 
-const title = buildPageTitle("Tim kiem san pham");
-const description = "Trang tim kiem san pham theo tu khoa.";
+const title = buildPageTitle("Tìm kiếm sản phẩm");
+const description = "Trang tìm kiếm sản phẩm theo từ khóa.";
 const products = await getProducts();
 const activeProducts = products.filter(p => p.stock_status !== "outofstock");
 
@@ -44,21 +44,21 @@ const searchIndex = activeProducts.map((product) => {
   <section class="search-page" data-search-page>
     <div class="section-box search-page__box">
       <div class="search-page__header">
-        <h1 data-search-title>Tim kiem san pham</h1>
-        <p data-search-meta>Nhap tu khoa tren o tim kiem de bat dau.</p>
+        <h1 data-search-title>Tìm kiếm sản phẩm</h1>
+        <p data-search-meta>Nhập từ khóa trên ô tìm kiếm để bắt đầu.</p>
       </div>
 
       <div class="products-grid" data-search-results></div>
 
       <div class="empty-state" data-search-empty hidden>
-        <h2>Khong tim thay san pham phu hop</h2>
-        <p>Thu doi tu khoa ngan gon hon hoac bo dau tieng Viet.</p>
-        <a href="/" class="search-page__empty-link">Quay lai trang chu</a>
+        <h2>Không tìm thấy sản phẩm phù hợp</h2>
+        <p>Thử đổi từ khóa ngắn gọn hơn hoặc bỏ dấu tiếng Việt.</p>
+        <a href="/" class="search-page__empty-link">Quay lại trang chủ</a>
       </div>
 
       <div class="search-pagination-controls" data-search-controls hidden>
         <button type="button" class="btn-load-all-results" data-load-all-btn>
-          Xem tat ca ket qua
+          Xem tất cả kết quả
           <span data-remaining-count></span>
         </button>
       </div>
@@ -228,7 +228,7 @@ const searchIndex = activeProducts.map((product) => {
     let loadedCount = 0;
     let autoLoadCount = 0;
     const PAGE_SIZE = 20;
-    const MAX_AUTO_LOADS = 3;
+    const MAX_AUTO_LOADS = 999; // Auto-load tất cả sản phẩm
 
     const loadNextBatch = () => {
       if (!resultsNode) return;
@@ -252,9 +252,9 @@ const searchIndex = activeProducts.map((product) => {
     const updateMeta = () => {
       if (!metaNode) return;
       if (matchedItems.length === 0) {
-        metaNode.textContent = "Nhap tu khoa tren o tim kiem de bat dau.";
+        metaNode.textContent = "Nhập từ khóa trên ô tìm kiếm để bắt đầu.";
       } else {
-        metaNode.textContent = `Tim thay ${matchedItems.length} ket qua. Dang hien thi ${loadedCount} san pham.`;
+        metaNode.textContent = `Tìm thấy ${matchedItems.length} kết quả. Đang hiển thị ${loadedCount} sản phẩm.`;
       }
     };
 
@@ -303,7 +303,7 @@ const searchIndex = activeProducts.map((product) => {
       const normalizedQuery = normalizeSearchText(query);
       const terms = normalizedQuery.split(" ").filter(Boolean);
 
-      titleNode.textContent = query ? `Ket qua tim kiem: ${query}` : "Tim kiem san pham";
+      titleNode.textContent = query ? `Kết quả tìm kiếm: ${query}` : "Tìm kiếm sản phẩm";
       
       // Reset state and prepare for new search
       resultsNode.replaceChildren();

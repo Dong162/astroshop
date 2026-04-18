@@ -120,7 +120,12 @@ export function buildProductJsonLd(product: Product, siteUrl: string) {
     description: buildProductSeoDescription(product),
     sku: String(product.id),
     category: product.categories[0] ?? "San pham",
-    image: imageUrls,
+    image: imageUrls.map((url) => ({
+      "@type": "ImageObject",
+      url: url,
+      name: toPlainText(product.name),
+      description: buildProductSeoDescription(product)
+    })),
     url: productUrl,
     offers: {
       "@type": "Offer",

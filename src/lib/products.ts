@@ -131,12 +131,12 @@ export function formatCurrency(value: number): string {
 
 export function formatDate(value: string | null | undefined): string {
   if (!value) {
-    return "Dang cap nhat";
+    return "Đang cập nhật";
   }
 
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
-    return "Dang cap nhat";
+    return "Đang cập nhật";
   }
 
   return new Intl.DateTimeFormat("vi-VN", {

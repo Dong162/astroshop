@@ -3,11 +3,11 @@ import type { Product } from "../types/product";
 export const sampleProducts: Product[] = [
   {
     id: 59,
-    name: "Loa bluetooth DOSS BT-20 chong nuoc, den RGB, 24W",
+    name: "Loa bluetooth DOSS BT-20 chống nước, đèn RGB, 24W",
     type: "simple",
     url: "https://cungnhaulamgiau.vn/loa-bluetooth-doss-bt-20-chong-nuocden-rgb-24w_p78",
     slug: "loa-bluetooth-doss-bt-20-chong-nuoc-den-rgb-24w",
-    categories: ["Am thanh", "Loa bluetooth"],
+    categories: ["Âm thanh", "Loa bluetooth"],
     manage_stock: false,
     regular_price: 1790000,
     sale_price: 1157000,
@@ -22,24 +22,24 @@ export const sampleProducts: Product[] = [
         src: "https://r6i.pen.dropbuy.vn/md2/s-1/p-78/loa-bluetooth-doss-bt-20-chong-nuocden-rgb-24w-17.jpg"
       }
     ],
-    description: `NHUNG DAC DIEM CHINH:
-* Ho tro them BASS
-* Cong suat am thanh trinh dieu khien 24W
-* Ghep noi khong day dich thuc
-* Anh sang dong bo nhip voi nhieu mau sac khac nhau
-* Pham vi ket noi Bluetooth len toi 66 feet
-* Chong nuoc IPX5
-* Thoi gian choi len toi 15 gio
+    description: `NHỮNG ĐẶC ĐIỂM CHÍNH:
+* Hỗ trợ thêm BASS
+* Công suất âm thanh trình điều khiển 24W
+* Ghép nối không dây dễ dàng
+* Ánh sáng đồng bộ nhịp với nhiều màu sắc khác nhau
+* Phạm vi kết nối Bluetooth lên tới 66 feet
+* Chống nước IPX5
+* Thời gian chơi lên tới 15 giờ
 
-THONG SO KY THUAT:
-Cong suat dau ra: 12W x 2
-Dap ung tan so: 60Hz - 18kHz
+THÔNG SỐ KỸ THUẬT:
+Công suất đầu ra: 12W x 2
+Đáp ứng tần số: 60Hz - 18kHz
 Bluetooth: 4.2
-Dau vao: 5V 2A
-Chat lieu: ABS
-Ket noi: Khong day
-Giao dien: Am thanh 3,5 mm, Micro USB`,
-    short_description: "Loa bluetooth chong nuoc voi den RGB, cong suat 24W va pin len toi 15 gio.",
+Đầu vào: 5V 2A
+Chất liệu: ABS
+Kết nối: Không dây
+Giao diện: Âm thanh 3,5 mm, Micro USB`,
+    short_description: "Loa bluetooth chống nước với đèn RGB, công suất 24W và pin lên tới 15 giờ.",
     stock_status: "instock",
     stock_quantity: 6,
     is_popular: true,
@@ -51,11 +51,11 @@ Giao dien: Am thanh 3,5 mm, Micro USB`,
   },
   {
     id: 60,
-    name: "Tai nghe chup tai ANC WaveSound Studio Pro",
+    name: "Tai nghe chụp tai ANC WaveSound Studio Pro",
     type: "simple",
     url: "",
     slug: "tai-nghe-chup-tai-anc-wavesound-studio-pro",
-    categories: ["Am thanh", "Tai nghe"],
+    categories: ["Âm thanh", "Tai nghe"],
     manage_stock: true,
     regular_price: 2490000,
     sale_price: 1890000,
@@ -64,14 +64,14 @@ Giao dien: Am thanh 3,5 mm, Micro USB`,
         src: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=1200&q=80"
       }
     ],
-    description: `Tai nghe chong on chu dong danh cho nguoi lam viec va giai tri.
+    description: `Tai nghe chống ồn chủ động dành cho người làm việc và giải trí.
 
-Diem noi bat:
-* ANC hybrid giam on toi 35dB
-* Driver 40mm giau chi tiet
-* 42 gio su dung lien tuc
-* Sac nhanh USB-C`,
-    short_description: "Tai nghe ANC pin lau, deo em, phu hop lam viec va nghe nhac moi ngay.",
+Điểm nổi bật:
+* ANC hybrid giảm ồn tới 35dB
+* Driver 40mm giàu chi tiết
+* 42 giờ sử dụng liên tục
+* Sạc nhanh USB-C`,
+    short_description: "Tai nghe ANC pin lâu, đeo êm, phù hợp làm việc và nghe nhạc mỗi ngày.",
     stock_status: "instock",
     stock_quantity: 12,
     is_popular: true,
@@ -83,11 +83,11 @@ Diem noi bat:
   },
   {
     id: 61,
-    name: "Den ban LED Focus Beam cam ung 3 tong mau",
+    name: "Đèn bàn LED Focus Beam cảm ứng 3 tông màu",
     type: "simple",
     url: "",
     slug: "den-ban-led-focus-beam-cam-ung-3-tong-mau",
-    categories: ["Nha cua", "Den ban"],
+    categories: ["Nhà cửa", "Đèn bàn"],
     manage_stock: true,
     regular_price: 890000,
     sale_price: 690000,
@@ -96,14 +96,14 @@ Diem noi bat:
         src: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80"
       }
     ],
-    description: `Mau den ban toi gian cho goc lam viec hien dai.
+    description: `Màu đèn bàn tối giản cho góc làm việc hiện đại.
 
-Tinh nang:
-* Cam ung cham muot
-* 3 tong mau anh sang
-* Co den linh hoat
-* Cong sac USB tich hop`,
-    short_description: "Den ban tinh gon, anh sang de chiu va phu hop hoc tap lan lam viec.",
+Tính năng:
+* Cảm ứng chạm mượt
+* 3 tông màu ánh sáng
+* Cơ đèn linh hoạt
+* Cổng sạc USB tích hợp`,
+    short_description: "Đèn bàn tinh gọn, ánh sáng dễ chịu và phù hợp học tập lẫn làm việc.",
     stock_status: "instock",
     stock_quantity: 20,
     is_popular: false,
@@ -115,11 +115,11 @@ Tinh nang:
   },
   {
     id: 62,
-    name: "Sac du phong VoltMax 20.000mAh PD 65W",
+    name: "Sạc dự phòng VoltMax 20.000mAh PD 65W",
     type: "simple",
     url: "",
     slug: "sac-du-phong-voltmax-20000mah-pd-65w",
-    categories: ["Phu kien", "Pin sac"],
+    categories: ["Phụ kiện", "Pin sạc"],
     manage_stock: true,
     regular_price: 1590000,
     sale_price: 1290000,
@@ -128,14 +128,14 @@ Tinh nang:
         src: "https://images.unsplash.com/photo-1583863788434-e58a36330cf0?auto=format&fit=crop&w=1200&q=80"
       }
     ],
-    description: `Pin sac cong suat cao cho laptop, tablet va dien thoai.
+    description: `Pin sạc công suất cao cho laptop, tablet và điện thoại.
 
-Diem noi bat:
-* Ho tro sac nhanh PD 65W
-* Man hinh hien thi pin so
-* 2 cong USB-C, 1 cong USB-A
-* Chuan an toan cho chuyen bay`,
-    short_description: "Sac du phong da nang cho thiet bi cong viec va du lich.",
+Điểm nổi bật:
+* Hỗ trợ sạc nhanh PD 65W
+* Màn hình hiển thị pin số
+* 2 cổng USB-C, 1 cổng USB-A
+* Chuẩn an toàn cho chuyến bay`,
+    short_description: "Sạc dự phòng đa năng cho thiết bị công việc và du lịch.",
     stock_status: "instock",
     stock_quantity: 9,
     is_popular: true,
