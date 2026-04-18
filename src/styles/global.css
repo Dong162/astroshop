@@ -1457,6 +1457,11 @@ ul, ol {
   .sticky-btn:hover {
     width: 140px;
   }
+
+  /* Ẩn nút liên hệ trên trang giỏ hàng/thanh toán ở mobile */
+  .sticky-contacts.hide-contacts-mobile {
+    display: none !important;
+  }
 }
 
 @media (max-width: 480px) {

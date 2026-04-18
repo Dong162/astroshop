@@ -1,0 +1,353 @@
+---
+import MainLayout from "../layouts/MainLayout.astro";
+import { SITE_NAME, buildAbsoluteUrl, buildOrganizationJsonLd } from "../lib/seo";
+
+const siteUrl = Astro.site?.toString() ?? "https://dongtaphoa.vn";
+const pageTitle = `Giới thiệu | ${SITE_NAME}`;
+const pageDescription = `${SITE_NAME} - Cửa hàng phụ kiện công nghệ uy tín, giá tốt nhất thị trường. Cam kết hàng chính hãng 100%, đổi trả 7 ngày, giao hàng toàn quốc.`;
+
+const aboutJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "AboutPage",
+  name: pageTitle,
+  description: pageDescription,
+  url: buildAbsoluteUrl("/gioi-thieu/", siteUrl),
+  mainEntity: buildOrganizationJsonLd(siteUrl)
+};
+---
+
+<MainLayout
+  title={pageTitle}
+  description={pageDescription}
+  structuredData={[aboutJsonLd]}
+>
+  <div class="about-page">
+    <!-- Breadcrumb -->
+    <nav class="about-breadcrumb" aria-label="Breadcrumb">
+      <a href="/">Trang chủ</a>
+      <span>›</span>
+      <span>Giới thiệu</span>
+    </nav>
+
+    <!-- Hero -->
+    <section class="about-hero">
+      <div class="about-hero__content">
+        <h1>Về {SITE_NAME}</h1>
+        <p class="about-hero__tagline">Phụ kiện công nghệ chính hãng — Giá tốt mỗi ngày</p>
+      </div>
+    </section>
+
+    <!-- Story -->
+    <section class="about-section">
+      <div class="about-section__icon">📖</div>
+      <h2>Câu chuyện của chúng tôi</h2>
+      <p>
+        <strong>{SITE_NAME}</strong> được thành lập với sứ mệnh mang đến cho người tiêu dùng Việt Nam 
+        những sản phẩm phụ kiện công nghệ <strong>chất lượng cao</strong> với <strong>mức giá hợp lý nhất</strong>. 
+        Chúng tôi tin rằng công nghệ tốt không nhất thiết phải đắt đỏ.
+      </p>
+      <p>
+        Với hơn <strong>500+ sản phẩm</strong> từ các thương hiệu uy tín trong và ngoài nước, 
+        chúng tôi tự hào phục vụ hàng nghìn khách hàng trên toàn quốc mỗi tháng.
+      </p>
+    </section>
+
+    <!-- Commitments -->
+    <section class="about-section">
+      <div class="about-section__icon">🤝</div>
+      <h2>Cam kết của chúng tôi</h2>
+      <div class="about-commitments">
+        <div class="about-commit-card">
+          <div class="about-commit-card__icon">✅</div>
+          <h3>Hàng chính hãng 100%</h3>
+          <p>Tất cả sản phẩm đều có nguồn gốc rõ ràng, được nhập khẩu và phân phối chính hãng.</p>
+        </div>
+        <div class="about-commit-card">
+          <div class="about-commit-card__icon">🔄</div>
+          <h3>Đổi trả trong 7 ngày</h3>
+          <p>Nếu sản phẩm bị lỗi kỹ thuật, chúng tôi hỗ trợ đổi trả miễn phí trong vòng 7 ngày.</p>
+        </div>
+        <div class="about-commit-card">
+          <div class="about-commit-card__icon">🚚</div>
+          <h3>Giao hàng toàn quốc</h3>
+          <p>Miễn phí vận chuyển cho đơn hàng trên 500.000₫. Giao nhanh trong 1-3 ngày làm việc.</p>
+        </div>
+        <div class="about-commit-card">
+          <div class="about-commit-card__icon">💰</div>
+          <h3>Giá tốt nhất thị trường</h3>
+          <p>Chúng tôi cam kết mang đến mức giá cạnh tranh nhất, kèm nhiều chương trình khuyến mãi hấp dẫn.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Contact -->
+    <section class="about-section about-contact">
+      <div class="about-section__icon">📞</div>
+      <h2>Liên hệ với chúng tôi</h2>
+      <div class="about-contact-grid">
+        <div class="about-contact-item">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.68A2 2 0 012 .83h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"></path></svg>
+          <div>
+            <strong>Hotline</strong>
+            <p><a href="tel:0911311139">0911 311 139</a></p>
+          </div>
+        </div>
+        <div class="about-contact-item">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+          <div>
+            <strong>Email</strong>
+            <p><a href="mailto:dongtaphoa@gmail.com">dongtaphoa@gmail.com</a></p>
+          </div>
+        </div>
+        <div class="about-contact-item">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          <div>
+            <strong>Giờ làm việc</strong>
+            <p>8:00 – 20:00 mỗi ngày</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="about-cta">
+      <h2>Khám phá sản phẩm ngay</h2>
+      <p>Hàng trăm phụ kiện công nghệ chính hãng đang chờ bạn</p>
+      <a href="/" class="about-cta__btn">Xem sản phẩm →</a>
+    </section>
+  </div>
+</MainLayout>
+
+<style>
+  .about-page {
+    padding: 24px 0 60px;
+  }
+
+  .about-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: #64748b;
+    margin-bottom: 24px;
+  }
+
+  .about-breadcrumb a {
+    color: #2563eb;
+    text-decoration: none;
+  }
+
+  .about-breadcrumb a:hover {
+    text-decoration: underline;
+  }
+
+  /* Hero */
+  .about-hero {
+    background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%);
+    border-radius: 16px;
+    padding: 48px 32px;
+    text-align: center;
+    color: #fff;
+    margin-bottom: 40px;
+  }
+
+  .about-hero h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin: 0 0 8px;
+  }
+
+  .about-hero__tagline {
+    font-size: 1rem;
+    opacity: 0.9;
+    margin: 0;
+  }
+
+  /* Sections */
+  .about-section {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 32px;
+    margin-bottom: 24px;
+  }
+
+  .about-section__icon {
+    font-size: 2rem;
+    margin-bottom: 12px;
+  }
+
+  .about-section h2 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #0f172a;
+    margin: 0 0 16px;
+  }
+
+  .about-section p {
+    color: #334155;
+    line-height: 1.7;
+    margin: 0 0 12px;
+  }
+
+  .about-section p:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Commitment cards */
+  .about-commitments {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-top: 20px;
+  }
+
+  .about-commit-card {
+    background: #f8fafc;
+    border: 1px solid #f1f5f9;
+    border-radius: 12px;
+    padding: 20px;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .about-commit-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  }
+
+  .about-commit-card__icon {
+    font-size: 1.5rem;
+    margin-bottom: 8px;
+  }
+
+  .about-commit-card h3 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #0f172a;
+    margin: 0 0 6px;
+  }
+
+  .about-commit-card p {
+    font-size: 0.85rem;
+    color: #64748b;
+    line-height: 1.5;
+    margin: 0;
+  }
+
+  /* Contact */
+  .about-contact-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 16px;
+  }
+
+  .about-contact-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 1px solid #f1f5f9;
+  }
+
+  .about-contact-item svg {
+    flex-shrink: 0;
+    color: #2563eb;
+    margin-top: 2px;
+  }
+
+  .about-contact-item strong {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #0f172a;
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  .about-contact-item p {
+    font-size: 0.85rem;
+    color: #64748b;
+    margin: 0;
+  }
+
+  .about-contact-item a {
+    color: #2563eb;
+    text-decoration: none;
+  }
+
+  .about-contact-item a:hover {
+    text-decoration: underline;
+  }
+
+  /* CTA */
+  .about-cta {
+    text-align: center;
+    padding: 40px 24px;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    border-radius: 16px;
+    color: #fff;
+  }
+
+  .about-cta h2 {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin: 0 0 8px;
+  }
+
+  .about-cta p {
+    color: #94a3b8;
+    margin: 0 0 20px;
+    font-size: 0.9rem;
+  }
+
+  .about-cta__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 12px 28px;
+    background: #2563eb;
+    color: #fff;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    text-decoration: none;
+    transition: background 0.2s;
+  }
+
+  .about-cta__btn:hover {
+    background: #1d4ed8;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .about-hero {
+      padding: 32px 20px;
+    }
+
+    .about-hero h1 {
+      font-size: 1.4rem;
+    }
+
+    .about-section {
+      padding: 24px 18px;
+    }
+
+    .about-commitments {
+      grid-template-columns: 1fr;
+    }
+
+    .about-contact-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .about-cta {
+      padding: 32px 18px;
+    }
+
+    .about-cta h2 {
+      font-size: 1.1rem;
+    }
+  }
+</style>

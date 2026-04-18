@@ -101,7 +101,7 @@ const searchIndex = activeProducts.map((product) => {
       </article>
     </template>
 
-    <script is:inline id="search-index-data" type="application/json" set:html={JSON.stringify(searchIndex)} />
+    <script is:inline id="search-index-data" type="application/json" set:html={JSON.stringify(searchIndex).replace(/</g, '\\u003c')} />
   </section>
 </MainLayout>
 

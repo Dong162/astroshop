@@ -1,5 +1,3 @@
-import { buildAdminCredentialHash } from "../lib/admin-hash";
-
 const ADMIN_SESSION_KEY = "astro-shop-admin-session";
 
 interface AdminSessionRecord {
@@ -49,19 +47,22 @@ function readSessionRecord(): AdminSessionRecord | null {
   }
 }
 
-export function hashAdminCredential(username: string, password: string): string {
-  return buildAdminCredentialHash(username, password);
+export function getAdminSessionToken(): string | null {
+  const record = readSessionRecord();
+  if (!record || record.expiresAt <= Date.now()) {
+    return null;
+  }
+  return record.token;
 }
 
-export function createAdminSession(token: string, ttlMinutes: number): void {
+export function createAdminSession(token: string, ttlSeconds: number): void {
   if (!canUseStorage()) {
     return;
   }
 
-  const safeTtl = normalizeTtlMinutes(ttlMinutes);
   const record: AdminSessionRecord = {
     token,
-    expiresAt: Date.now() + safeTtl * 60 * 1000
+    expiresAt: Date.now() + (ttlSeconds * 1000)
   };
 
   window.localStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify(record));
@@ -75,7 +76,7 @@ export function clearAdminSession(): void {
   window.localStorage.removeItem(ADMIN_SESSION_KEY);
 }
 
-export function isAdminSessionValid(expectedToken: string): boolean {
+export function isAdminSessionValid(): boolean {
   const record = readSessionRecord();
 
   if (!record) {
@@ -83,9 +84,8 @@ export function isAdminSessionValid(expectedToken: string): boolean {
   }
 
   const isExpired = record.expiresAt <= Date.now();
-  const isTokenMismatch = record.token !== expectedToken;
 
-  if (isExpired || isTokenMismatch) {
+  if (isExpired) {
     clearAdminSession();
     return false;
   }

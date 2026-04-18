@@ -1,19 +1,10 @@
 ---
-import { buildAdminCredentialHash } from "../../lib/admin-hash";
 import AdminLayout from "../../layouts/AdminLayout.astro";
 import { buildPageTitle, SITE_NAME } from "../../lib/seo";
 import { getProducts, formatCurrency } from "../../lib/products";
 
 const title = buildPageTitle("Danh sách sản phẩm");
 const description = `Xem danh sách sản phẩm đã render trên ${SITE_NAME}.`;
-
-const rawAdminUsername = (import.meta.env.ADMIN_USERNAME ?? "").trim();
-const rawAdminPassword = (import.meta.env.ADMIN_PASSWORD ?? "").trim();
-const configuredTtl = Number(import.meta.env.ADMIN_SESSION_TTL_MINUTES ?? 480);
-const adminSessionTtlMinutes = Number.isFinite(configuredTtl) ? Math.max(5, Math.floor(configuredTtl)) : 480;
-
-const adminAuthConfigured = rawAdminUsername.length > 0 && rawAdminPassword.length > 0;
-const adminCredentialHash = adminAuthConfigured ? buildAdminCredentialHash(rawAdminUsername, rawAdminPassword) : "";
 
 // Fetch all products at build time
 const allProducts = await getProducts();
@@ -41,9 +32,6 @@ const productIndex = allProducts.map(p => ({
 <AdminLayout title={title} description={description} activePage="products">
   <section
     data-admin-products
-    data-admin-auth-configured={adminAuthConfigured ? "true" : "false"}
-    data-admin-credential-hash={adminCredentialHash}
-    data-admin-session-ttl={String(adminSessionTtlMinutes)}
   >
     <header class="admin-header">
       <div class="admin-header__left">
@@ -248,8 +236,6 @@ const productIndex = allProducts.map(p => ({
   const page = document.querySelector<HTMLElement>("[data-admin-products]");
 
   if (page) {
-    const authConfigured = page.dataset.adminAuthConfigured === "true";
-    const credentialHash = (page.dataset.adminCredentialHash ?? "").trim();
 
     const logoutBtn = document.querySelector<HTMLAnchorElement>("[data-admin-logout]");
     const logoutBtnMobile = document.querySelector<HTMLAnchorElement>("[data-admin-logout-mobile]");
@@ -262,8 +248,8 @@ const productIndex = allProducts.map(p => ({
     logoutBtn?.addEventListener("click", handleLogout);
     logoutBtnMobile?.addEventListener("click", handleLogout);
 
-    if (!authConfigured || !credentialHash || !isAdminSessionValid(credentialHash)) {
-      window.location.href = "/admin/login" + (authConfigured ? "" : "?error=config");
+    if (!isAdminSessionValid()) {
+      window.location.href = "/admin/login";
     } else {
       const searchInput = page.querySelector<HTMLInputElement>("[data-product-search]");
       const filterSelect = page.querySelector<HTMLSelectElement>("[data-product-filter]");

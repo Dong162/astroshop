@@ -1,26 +1,14 @@
 ---
-import { buildAdminCredentialHash } from "../../lib/admin-hash";
 import AdminLayout from "../../layouts/AdminLayout.astro";
 import { buildPageTitle, SITE_NAME } from "../../lib/seo";
 
 const title = buildPageTitle("Quản lý đơn hàng");
 const description = `Trình quản trị theo dõi và xử lý đơn hàng của ${SITE_NAME}.`;
-
-const rawAdminUsername = (import.meta.env.ADMIN_USERNAME ?? "").trim();
-const rawAdminPassword = (import.meta.env.ADMIN_PASSWORD ?? "").trim();
-const configuredTtl = Number(import.meta.env.ADMIN_SESSION_TTL_MINUTES ?? 480);
-const adminSessionTtlMinutes = Number.isFinite(configuredTtl) ? Math.max(5, Math.floor(configuredTtl)) : 480;
-
-const adminAuthConfigured = rawAdminUsername.length > 0 && rawAdminPassword.length > 0;
-const adminCredentialHash = adminAuthConfigured ? buildAdminCredentialHash(rawAdminUsername, rawAdminPassword) : "";
 ---
 
 <AdminLayout title={title} description={description} activePage="orders">
   <section
     data-admin-orders
-    data-admin-auth-configured={adminAuthConfigured ? "true" : "false"}
-    data-admin-credential-hash={adminCredentialHash}
-    data-admin-session-ttl={String(adminSessionTtlMinutes)}
   >
     <header class="admin-header">
       <div class="admin-header__left">
@@ -252,7 +240,7 @@ const adminCredentialHash = adminAuthConfigured ? buildAdminCredentialHash(rawAd
 </AdminLayout>
 
 <script>
-  import { clearAdminSession, isAdminSessionValid } from "../../scripts/admin-auth";
+  import { clearAdminSession, isAdminSessionValid, getAdminSessionToken } from "../../scripts/admin-auth";
 
   interface OrderItem {
     name: string;
@@ -390,9 +378,6 @@ const adminCredentialHash = adminAuthConfigured ? buildAdminCredentialHash(rawAd
     const logoutBtn = document.querySelector<HTMLAnchorElement>("[data-admin-logout]");
     const logoutBtnMobile = document.querySelector<HTMLAnchorElement>("[data-admin-logout-mobile]");
 
-    const authConfigured = page.dataset.adminAuthConfigured === "true";
-    const credentialHash = (page.dataset.adminCredentialHash ?? "").trim();
-
     const formatDt = (iso: string | null) => {
       if (!iso) return "--";
       const d = new Date(iso);
@@ -469,8 +454,8 @@ const adminCredentialHash = adminAuthConfigured ? buildAdminCredentialHash(rawAd
       document.body.classList.add("is-modal-open");
     };
 
-    if (!authConfigured || !credentialHash || !isAdminSessionValid(credentialHash)) {
-      window.location.href = "/admin/login" + (authConfigured ? "" : "?error=config");
+    if (!isAdminSessionValid()) {
+      window.location.href = "/admin/login";
     } else {
       let allOrders: OrderRecord[] = [];
       let isLoading = false;
@@ -588,8 +573,11 @@ const adminCredentialHash = adminAuthConfigured ? buildAdminCredentialHash(rawAd
             select: "id,created_at,customer_name,customer_phone,customer_email,shipping_address,note,payment_method,status,subtotal,shipping_fee,discount_amount,total,items",
             order: "created_at.desc.nullslast"
           });
+          const token = getAdminSessionToken();
+          if (!token) throw new Error("Chưa đăng nhập.");
+
           const res = await fetch(`${supabaseUrl}/rest/v1/${ordersTable}?${params}`, {
-            headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` }
+            headers: { apikey: supabaseKey, Authorization: `Bearer ${token}` }
           });
           if (!res.ok) throw new Error(await res.text());
           const raw = await res.json();

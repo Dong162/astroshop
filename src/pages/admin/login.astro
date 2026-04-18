@@ -7,21 +7,14 @@ const title = buildPageTitle("Đăng nhập Admin");
 import { SITE_NAME } from "../../lib/seo";
 const description = `Đăng nhập vào khu vực quản trị đơn hàng của ${SITE_NAME}.`;
 
-const rawAdminUsername = (import.meta.env.ADMIN_USERNAME ?? "").trim();
-const rawAdminPassword = (import.meta.env.ADMIN_PASSWORD ?? "").trim();
-const configuredTtl = Number(import.meta.env.ADMIN_SESSION_TTL_MINUTES ?? 480);
-const adminSessionTtlMinutes = Number.isFinite(configuredTtl) ? Math.max(5, Math.floor(configuredTtl)) : 480;
-
-const adminAuthConfigured = rawAdminUsername.length > 0 && rawAdminPassword.length > 0;
-const adminCredentialHash = adminAuthConfigured ? buildAdminCredentialHash(rawAdminUsername, rawAdminPassword) : "";
+const configuredTtlMinutes = Number(import.meta.env.ADMIN_SESSION_TTL_MINUTES ?? 480);
+const adminSessionTtlMinutes = Number.isFinite(configuredTtlMinutes) ? Math.max(5, Math.floor(configuredTtlMinutes)) : 480;
 ---
 
 <MainLayout title={title} description={description} noindex>
   <section
     class="admin-login"
     data-admin-login
-    data-admin-auth-configured={adminAuthConfigured ? "true" : "false"}
-    data-admin-credential-hash={adminCredentialHash}
     data-admin-session-ttl={String(adminSessionTtlMinutes)}
   >
     <div class="admin-login__inner">
@@ -42,10 +35,10 @@ const adminCredentialHash = adminAuthConfigured ? buildAdminCredentialHash(rawAd
 
         <form class="admin-login__form" data-admin-login-form>
           <div class="form-group">
-            <label for="username">Tên đăng nhập</label>
+            <label for="email">Tài khoản Email</label>
             <div class="input-wrapper">
               <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-              <input type="text" id="username" name="username" placeholder="Nhập tài khoản admin" autocomplete="username" required />
+              <input type="email" id="email" name="email" placeholder="Nhập tài khoản email" autocomplete="email" required />
             </div>
           </div>
 
@@ -75,19 +68,19 @@ const adminCredentialHash = adminAuthConfigured ? buildAdminCredentialHash(rawAd
   import {
     clearAdminSession,
     createAdminSession,
-    hashAdminCredential,
     isAdminSessionValid
   } from "../../scripts/admin-auth";
 
   const page = document.querySelector<HTMLElement>("[data-admin-login]");
+
+  const supabaseUrl = (import.meta.env.PUBLIC_SUPABASE_URL ?? "").trim();
+  const supabaseKey = (import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? "").trim();
 
   if (page) {
     const statusNode = page.querySelector<HTMLElement>("[data-admin-login-status]");
     const form = page.querySelector<HTMLFormElement>("[data-admin-login-form]");
     const submitButton = page.querySelector<HTMLButtonElement>("[data-admin-login-submit]");
 
-    const authConfigured = page.dataset.adminAuthConfigured === "true";
-    const credentialHash = (page.dataset.adminCredentialHash ?? "").trim();
     const sessionTtl = Number(page.dataset.adminSessionTtl ?? "480");
 
     const setStatus = (message: string, kind: "info" | "error") => {
@@ -106,20 +99,15 @@ const adminCredentialHash = adminAuthConfigured ? buildAdminCredentialHash(rawAd
 
     const params = new URLSearchParams(window.location.search);
     const shouldLogout = params.get("logout") === "1";
-    const configError = params.get("error") === "config";
 
     if (shouldLogout) {
       clearAdminSession();
     }
 
-    if (configError) {
-      setStatus("Tài khoản admin chưa được cấu hình trên máy chủ.", "error");
-    }
-
-    if (!authConfigured || !credentialHash) {
-      setStatus("Chưa cấu hình ADMIN_USERNAME/ADMIN_PASSWORD trong tệp .env.", "error");
+    if (!supabaseUrl || !supabaseKey) {
+      setStatus("Chưa cấu hình PUBLIC_SUPABASE_URL và ANON_KEY trong tệp .env.", "error");
       if (submitButton) submitButton.disabled = true;
-    } else if (isAdminSessionValid(credentialHash)) {
+    } else if (isAdminSessionValid()) {
       window.location.href = "/admin/orders";
     } else {
       form?.addEventListener("submit", async (event) => {
@@ -129,11 +117,11 @@ const adminCredentialHash = adminAuthConfigured ? buildAdminCredentialHash(rawAd
         if (!form) return;
 
         const formData = new FormData(form);
-        const username = String(formData.get("username") ?? "").trim();
+        const email = String(formData.get("email") ?? "").trim();
         const password = String(formData.get("password") ?? "");
 
-        if (!username || !password) {
-          setStatus("Vui lòng nhập đầy đủ tài khoản và mật khẩu.", "error");
+        if (!email || !password) {
+          setStatus("Vui lòng nhập đầy đủ email và mật khẩu.", "error");
           return;
         }
 
@@ -145,13 +133,30 @@ const adminCredentialHash = adminAuthConfigured ? buildAdminCredentialHash(rawAd
         }
 
         try {
-          const enteredHash = hashAdminCredential(username, password);
-          if (enteredHash !== credentialHash) {
-            setStatus("Thông tin đăng nhập không chính xác.", "error");
-            return;
+          // XÁC THỰC BẰNG SUPABASE AUTH API
+          const response = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': supabaseKey
+            },
+            body: JSON.stringify({ email, password })
+          });
+
+          if (!response.ok) {
+            const err = await response.json().catch(() => null);
+            throw new Error(err?.error_description || err?.msg || "Email hoặc Mật khẩu không chính xác.");
           }
 
-          createAdminSession(credentialHash, sessionTtl);
+          const data = await response.json();
+          if (!data.access_token) {
+            throw new Error("Không thể xác thực danh tính.");
+          }
+
+          // Convert expires_in (seconds) or use fallback from sessionTtl
+          const ttlToStore = data.expires_in ? data.expires_in : sessionTtl * 60;
+          createAdminSession(data.access_token, ttlToStore);
+
           window.location.href = "/admin/orders";
         } catch (error) {
           setStatus(error instanceof Error ? error.message : "Đăng nhập thất bại.", "error");

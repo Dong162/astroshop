@@ -38,25 +38,25 @@ const shippingFee = Number(import.meta.env.PUBLIC_DEFAULT_SHIPPING_FEE ?? 25000)
                 <input type="tel" name="phone" autocomplete="tel" placeholder="09xx xxx xxx" required />
               </label>
 
-              <label class="form-field">
-                <span class="form-label">Email</span>
-                <input type="email" name="email" autocomplete="email" placeholder="email@example.com" />
-              </label>
-
-              <label class="form-field">
+              <label class="form-field form-field--full">
                 <span class="form-label">Địa chỉ nhận hàng <em>*</em></span>
-                <input
-                  type="text"
+                <textarea
                   name="address"
+                  rows="2"
                   autocomplete="street-address"
                   placeholder="Số nhà, đường, quận/huyện, tỉnh/thành"
                   required
-                />
+                ></textarea>
               </label>
 
-              <label class="form-field form-field--full">
+              <label class="form-field">
                 <span class="form-label">Ghi chú đơn hàng</span>
-                <textarea name="note" rows="3" placeholder="Ví dụ: Giao giờ hành chính, gọi trước khi giao..."></textarea>
+                <input type="text" name="note" placeholder="Ví dụ: Giao giờ hành chính..." />
+              </label>
+
+              <label class="form-field">
+                <span class="form-label">Email</span>
+                <input type="email" name="email" autocomplete="email" placeholder="email@example.com" />
               </label>
             </div>
           </div>
@@ -704,10 +704,10 @@ const shippingFee = Number(import.meta.env.PUBLIC_DEFAULT_SHIPPING_FEE ?? 25000)
 
   .payment-form input,
   .payment-form textarea {
-    padding: 10px 14px;
+    padding: 9px 12px;
     border: 1px solid #e2e8f0;
     border-radius: 8px;
-    font-size: 16px; /* Hỗ trợ chống auto-zoom trên mobile */
+    font-size: 15px; /* Giảm nhẹ để cân đối hơn, có thể gây zoom nhẹ trên iOS */
   }
 
   .payment-methods {
@@ -778,11 +778,11 @@ const shippingFee = Number(import.meta.env.PUBLIC_DEFAULT_SHIPPING_FEE ?? 25000)
    .voucher-input-group input {
       flex: 1;
       min-width: 0;
-      height: 40px;
+      height: 38px;
       padding: 0 12px;
       border: 1px solid #e2e8f0;
       border-radius: 8px;
-      font-size: 0.9rem;
+      font-size: 14px;
       outline: none;
       transition: border-color 0.2s;
   }
@@ -791,13 +791,13 @@ const shippingFee = Number(import.meta.env.PUBLIC_DEFAULT_SHIPPING_FEE ?? 25000)
   }
   .voucher-input-group button {
       padding: 0 16px;
-      height: 40px;
+      height: 38px;
       background: #0f172a;
       color: #fff;
       border: none;
       border-radius: 8px;
       font-weight: 500;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       cursor: pointer;
       white-space: nowrap;
       transition: background 0.2s;
@@ -822,6 +822,8 @@ const shippingFee = Number(import.meta.env.PUBLIC_DEFAULT_SHIPPING_FEE ?? 25000)
     padding: 20px;
     position: sticky;
     top: 100px;
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
   }
 
   .payment-summary__inner h2 {
@@ -959,6 +961,7 @@ const shippingFee = Number(import.meta.env.PUBLIC_DEFAULT_SHIPPING_FEE ?? 25000)
 
     .payment-summary__inner {
       position: static;
+      max-height: none;
       border-radius: 12px;
       box-shadow: none;
       background: var(--surface-soft);
@@ -966,6 +969,11 @@ const shippingFee = Number(import.meta.env.PUBLIC_DEFAULT_SHIPPING_FEE ?? 25000)
 
     .form-grid {
       grid-template-columns: 1fr;
+    }
+
+    /* Fix #3: Tăng kích thước ô địa chỉ trên mobile */
+    .payment-form textarea[name="address"] {
+      min-height: 80px;
     }
 
     .payment-mobile-bar {

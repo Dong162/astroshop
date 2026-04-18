@@ -63,11 +63,11 @@ const hideMobileFooter = pathname.startsWith("/cart") || pathname.startsWith("/p
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
     {schemaList.map((schema) => (
-      <script is:inline type="application/ld+json" set:html={JSON.stringify(schema)} />
+      <script is:inline type="application/ld+json" set:html={JSON.stringify(schema).replace(/</g, '\\u003c')} />
     ))}
   </head>
   <body>
@@ -154,6 +154,7 @@ const hideMobileFooter = pathname.startsWith("/cart") || pathname.startsWith("/p
             <a href="/">🏠 Trang chủ</a>
             <a href={sectionLink("#ban-chay")}>📦 Sản phẩm</a>
             <a href={sectionLink("#flash-sale")}>⚡ Khuyến mãi</a>
+            <a href="/gioi-thieu">ℹ️ Giới thiệu</a>
             <a href="/cart">🛒 Giỏ hàng</a>
           </nav>
         </div>
@@ -186,6 +187,7 @@ const hideMobileFooter = pathname.startsWith("/cart") || pathname.startsWith("/p
             <a href="/">Trang chủ</a>
             <a href={sectionLink("#flash-sale")}>Flash Sale</a>
             <a href={sectionLink("#ban-chay")}>Bán chạy nhất</a>
+            <a href="/gioi-thieu">Giới thiệu</a>
           </div>
           <div>
             <h3>Liên hệ</h3>
@@ -209,9 +211,9 @@ const hideMobileFooter = pathname.startsWith("/cart") || pathname.startsWith("/p
       </div>
     </footer>
 
-    <!-- Sticky Contact Buttons (hidden on admin pages) -->
+    <!-- Sticky Contact Buttons (hidden on admin pages, hidden on mobile for cart/payment) -->
     {!pathname.startsWith("/admin") && (
-      <div class="sticky-contacts" id="sticky-contacts" aria-label="Liên hệ nhanh">
+      <div class={`sticky-contacts ${hideMobileFooter ? 'hide-contacts-mobile' : ''}`} id="sticky-contacts" aria-label="Liên hệ nhanh">
         <a
           href="https://zalo.me/0911371139"
           class="sticky-btn sticky-btn--zalo"

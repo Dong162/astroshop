@@ -255,7 +255,7 @@ const structuredData = [
     image: toImageCdn(p.images[0]?.src ?? ""),
     flash: p.flash,
     isPopular: p.is_popular
-  })))} />
+  }))).replace(/</g, '\\u003c')} />
 
   <script>
     const section = document.querySelector<HTMLElement>("[data-infinite-scroll-section]");

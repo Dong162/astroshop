@@ -1,26 +1,14 @@
 ---
-import { buildAdminCredentialHash } from "../../lib/admin-hash";
 import AdminLayout from "../../layouts/AdminLayout.astro";
 import { buildPageTitle, SITE_NAME } from "../../lib/seo";
 
 const title = buildPageTitle("Quản lý mã giảm giá");
 const description = `Trình quản trị theo dõi và xử lý mã giảm giá của ${SITE_NAME}.`;
-
-const rawAdminUsername = (import.meta.env.ADMIN_USERNAME ?? "").trim();
-const rawAdminPassword = (import.meta.env.ADMIN_PASSWORD ?? "").trim();
-const configuredTtl = Number(import.meta.env.ADMIN_SESSION_TTL_MINUTES ?? 480);
-const adminSessionTtlMinutes = Number.isFinite(configuredTtl) ? Math.max(5, Math.floor(configuredTtl)) : 480;
-
-const adminAuthConfigured = rawAdminUsername.length > 0 && rawAdminPassword.length > 0;
-const adminCredentialHash = adminAuthConfigured ? buildAdminCredentialHash(rawAdminUsername, rawAdminPassword) : "";
 ---
 
 <AdminLayout title={title} description={description} activePage="vouchers">
   <section
     data-admin-vouchers
-    data-admin-auth-configured={adminAuthConfigured ? "true" : "false"}
-    data-admin-credential-hash={adminCredentialHash}
-    data-admin-session-ttl={String(adminSessionTtlMinutes)}
   >
     <header class="admin-header">
       <div class="admin-header__left">
@@ -166,7 +154,7 @@ const adminCredentialHash = adminAuthConfigured ? buildAdminCredentialHash(rawAd
 </AdminLayout>
 
 <script>
-  import { clearAdminSession, isAdminSessionValid } from "../../scripts/admin-auth";
+  import { clearAdminSession, isAdminSessionValid, getAdminSessionToken } from "../../scripts/admin-auth";
 
   interface VoucherRecord {
     id: number | null;
@@ -224,9 +212,6 @@ const adminCredentialHash = adminAuthConfigured ? buildAdminCredentialHash(rawAd
     const logoutBtn = document.querySelector<HTMLAnchorElement>("[data-admin-logout]");
     const logoutBtnMobile = document.querySelector<HTMLAnchorElement>("[data-admin-logout-mobile]");
 
-    const authConfigured = page.dataset.adminAuthConfigured === "true";
-    const credentialHash = (page.dataset.adminCredentialHash ?? "").trim();
-
     const formatDt = (iso: string | null) => {
       if (!iso) return "--";
       const d = new Date(iso);
@@ -273,8 +258,8 @@ const adminCredentialHash = adminAuthConfigured ? buildAdminCredentialHash(rawAd
       document.body.classList.add("is-modal-open");
     };
 
-    if (!authConfigured || !credentialHash || !isAdminSessionValid(credentialHash)) {
-      window.location.href = "/admin/login" + (authConfigured ? "" : "?error=config");
+    if (!isAdminSessionValid()) {
+      window.location.href = "/admin/login";
     } else {
       let allData: VoucherRecord[] = [];
       let isLoading = false;
@@ -383,9 +368,12 @@ const adminCredentialHash = adminAuthConfigured ? buildAdminCredentialHash(rawAd
         if (!silent) setStatus("Đang tải dữ liệu...", "info");
 
         try {
+          const token = getAdminSessionToken();
+          if (!token) throw new Error("Chưa đăng nhập.");
+
           const res = await fetch(`${supabaseUrl}/rest/v1/${vouchersTable}?select=*&order=created_at.desc`, {
             cache: 'no-store',
-            headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` }
+            headers: { apikey: supabaseKey, Authorization: `Bearer ${token}` }
           });
           if (!res.ok) throw new Error(await res.text());
           const raw = await res.json();
@@ -416,11 +404,14 @@ const adminCredentialHash = adminAuthConfigured ? buildAdminCredentialHash(rawAd
         const deleteButton = target.closest<HTMLButtonElement>("[data-voucher-delete]");
         if (deleteButton) {
            const id = deleteButton.dataset.id;
-           if(confirm("Bạn có chắc chắn muốn xóa mã này?")) {
+            if(confirm("Bạn có chắc chắn muốn xóa mã này?")) {
               try {
+                const token = getAdminSessionToken();
+                if (!token) throw new Error("Chưa đăng nhập.");
+
                 const res = await fetch(`${supabaseUrl}/rest/v1/${vouchersTable}?id=eq.${id}`, {
                     method: 'DELETE',
-                    headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` }
+                    headers: { apikey: supabaseKey, Authorization: `Bearer ${token}` }
                 });
                 if (!res.ok) throw new Error("Delete failed");
                 setStatus("Xóa thành công", "success");
@@ -458,17 +449,20 @@ const adminCredentialHash = adminAuthConfigured ? buildAdminCredentialHash(rawAd
           };
 
           try {
+              const token = getAdminSessionToken();
+              if (!token) throw new Error("Chưa đăng nhập.");
+
               let res;
               if (id) {
                   res = await fetch(`${supabaseUrl}/rest/v1/${vouchersTable}?id=eq.${id}`, {
                     method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json', apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` },
+                    headers: { 'Content-Type': 'application/json', apikey: supabaseKey, Authorization: `Bearer ${token}` },
                     body: JSON.stringify(payload)
                 });
               } else {
                  res = await fetch(`${supabaseUrl}/rest/v1/${vouchersTable}`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` },
+                    headers: { 'Content-Type': 'application/json', apikey: supabaseKey, Authorization: `Bearer ${token}` },
                     body: JSON.stringify(payload)
                 });
               }

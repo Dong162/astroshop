@@ -1,4 +1,4 @@
-﻿import type { APIRoute } from "astro";
+import type { APIRoute } from "astro";
 
 import { getProducts } from "../lib/products";
 import { buildAbsoluteUrl } from "../lib/seo";
@@ -28,6 +28,11 @@ export const GET: APIRoute = async ({ site }) => {
   const urls = [
     {
       loc: buildAbsoluteUrl("/", siteUrl),
+      lastmod: new Date().toISOString(),
+      images: []
+    },
+    {
+      loc: buildAbsoluteUrl("/gioi-thieu/", siteUrl),
       lastmod: new Date().toISOString(),
       images: []
     },
