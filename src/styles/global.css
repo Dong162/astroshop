@@ -1238,13 +1238,68 @@ ul, ol {
   }
 
   /* Footer */
+  .site-footer {
+    margin-top: 24px;
+    padding-top: 24px;
+  }
+
   .site-footer__grid {
-    grid-template-columns: 1fr;
-    gap: 20px;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px 12px;
+    padding-bottom: 20px;
+  }
+
+  .footer-brand-col {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .footer-brand-col p {
+    display: none; /* Ẩn bớt text giới thiệu để giảm số dòng */
+  }
+
+  .footer-brand {
+    justify-content: center;
   }
 
   .footer-trust {
+    justify-content: center;
     gap: 6px;
+    margin-top: 8px;
+  }
+
+  .site-footer h3 {
+    text-align: left;
+    font-size: 0.95rem;
+    margin-bottom: 10px;
+    position: static;
+    padding-bottom: 0;
+  }
+
+  .site-footer h3::after {
+    display: none;
+  }
+
+  .site-footer a,
+  .site-footer p {
+    justify-content: flex-start;
+    text-align: left;
+    font-size: 0.82rem;
+    margin-bottom: 8px;
+    word-break: break-word;
+  }
+  
+  .site-footer p svg, 
+  .site-footer a svg {
+    margin-top: 2px;
+    align-self: flex-start;
+  }
+
+  .footer-bottom {
+    padding: 12px 0 20px;
   }
 
   /* Product detail */
