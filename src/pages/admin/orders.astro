@@ -133,6 +133,18 @@ const description = `Trình quản trị theo dõi và xử lý đơn hàng củ
           <h3>Không tìm thấy đơn hàng</h3>
           <p>Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm để xem thêm kết quả.</p>
         </div>
+
+        <!-- Progressive Loading Control -->
+        <div class="admin-load-more" data-admin-load-area hidden>
+          <div class="loading-sentinel" data-admin-sentinel></div>
+          <div class="load-more-action" data-admin-see-all-wrap hidden>
+            <p>Bạn đã xem 60 đơn hàng gần nhất</p>
+            <button type="button" class="btn-see-all" data-admin-see-all>
+              <span>Xem toàn bộ đơn hàng</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m7 13 5 5 5-5M7 6l5 5 5-5"/></svg>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -457,8 +469,24 @@ const description = `Trình quản trị theo dõi và xử lý đơn hàng củ
     if (!isAdminSessionValid()) {
       window.location.href = "/admin/login";
     } else {
+      const handleLogout = (e: Event) => {
+        e.preventDefault();
+        clearAdminSession();
+        window.location.href = "/admin/login?logout=1";
+      };
+      logoutBtn?.addEventListener("click", handleLogout);
+      logoutBtnMobile?.addEventListener("click", handleLogout);
+
       let allOrders: OrderRecord[] = [];
       let isLoading = false;
+      let currentLimit = 20;
+      let scrollLoads = 0; // 0, 1, 2
+      let hasMoreOnServer = true;
+
+      const loadArea = page.querySelector<HTMLElement>("[data-admin-load-area]");
+      const sentinel = page.querySelector<HTMLElement>("[data-admin-sentinel]");
+      const seeAllWrap = page.querySelector<HTMLElement>("[data-admin-see-all-wrap]");
+      const seeAllBtn = page.querySelector<HTMLButtonElement>("[data-admin-see-all]");
 
       const setStatus = (msg: string, kind: "info" | "error") => {
         if (!statusNode) return;
@@ -560,28 +588,65 @@ const description = `Trình quản trị theo dõi và xử lý đơn hàng củ
         }
 
         if (emptyNode) emptyNode.hidden = filtered.length > 0;
+
+        // Manage Load More UI
+        if (loadArea) {
+           const isFiltering = st !== "all" || kw !== "";
+           // Only show paging if not filtering (to keep DB load simple)
+           // Actually, the user asked for this flow, so we apply it to the general view
+           const potentiallyMore = hasMoreOnServer && !isFiltering;
+           loadArea.hidden = !potentiallyMore;
+           
+           if (potentiallyMore) {
+              const reachedScrollLimit = scrollLoads >= 2;
+              if (sentinel) sentinel.style.display = reachedScrollLimit ? "none" : "";
+              if (seeAllWrap) seeAllWrap.hidden = !reachedScrollLimit;
+           }
+        }
       };
 
-      const loadOrders = async (silent = false) => {
+      const loadOrders = async (silent = false, append = false) => {
         if (isLoading) return;
         isLoading = true;
         if (refreshButton) refreshButton.classList.add("is-spinning");
-        if (!silent) setStatus("Đang tải dữ liệu mới nhất...", "info");
+        if (!silent && !append) setStatus("Đang tải dữ liệu...", "info");
 
         try {
+          const offset = append ? allOrders.length : 0;
+          const limit = currentLimit;
+
           const params = new URLSearchParams({
             select: "id,created_at,customer_name,customer_phone,customer_email,shipping_address,note,payment_method,status,subtotal,shipping_fee,discount_amount,total,items",
-            order: "created_at.desc.nullslast"
+            order: "created_at.desc.nullslast",
+            limit: String(limit),
+            offset: String(offset)
           });
           const token = getAdminSessionToken();
           if (!token) throw new Error("Chưa đăng nhập.");
 
           const res = await fetch(`${supabaseUrl}/rest/v1/${ordersTable}?${params}`, {
-            headers: { apikey: supabaseKey, Authorization: `Bearer ${token}` }
+            headers: { 
+              apikey: supabaseKey, 
+              Authorization: `Bearer ${token}`,
+              "Prefer": "count=exact" 
+            }
           });
           if (!res.ok) throw new Error(await res.text());
+          
           const raw = await res.json();
-          allOrders = Array.isArray(raw) ? (raw.map(normalizeOrder).filter(Boolean) as OrderRecord[]) : [];
+          const normalized = Array.isArray(raw) ? (raw.map(normalizeOrder).filter(Boolean) as OrderRecord[]) : [];
+          
+          if (append) {
+            allOrders = [...allOrders, ...normalized];
+          } else {
+            allOrders = normalized;
+          }
+
+          // Check if we reached the end of the DB
+          if (normalized.length < limit) {
+             hasMoreOnServer = false;
+          }
+
           renderOrders();
           clearStatus();
           if (lastSyncNode) lastSyncNode.textContent = `Cập nhật lúc ${new Date().toLocaleTimeString("vi-VN")}`;
@@ -592,6 +657,23 @@ const description = `Trình quản trị theo dõi và xử lý đơn hàng củ
           if (refreshButton) refreshButton.classList.remove("is-spinning");
         }
       };
+
+      // Intersection Observer for Infinite Scroll
+      if (sentinel) {
+        const observer = new IntersectionObserver((entries) => {
+          if (entries[0].isIntersecting && scrollLoads < 2 && !isLoading && hasMoreOnServer) {
+            scrollLoads++;
+            loadOrders(true, true);
+          }
+        }, { rootMargin: "200px" });
+        observer.observe(sentinel);
+      }
+
+      seeAllBtn?.addEventListener("click", () => {
+        scrollLoads = 999; // bypass limit
+        currentLimit = 1000; // fetch a large batch
+        loadOrders(false, true);
+      });
 
       page.addEventListener("click", (event) => {
         const target = event.target;
@@ -616,18 +698,21 @@ const description = `Trình quản trị theo dõi và xử lý đơn hàng củ
 
       searchInput?.addEventListener("input", renderOrders);
       filterSelect?.addEventListener("change", renderOrders);
-      refreshButton?.addEventListener("click", () => loadOrders(false));
+      refreshButton?.addEventListener("click", () => {
+        currentLimit = 20;
+        scrollLoads = 0;
+        hasMoreOnServer = true;
+        loadOrders(false, false);
+      });
 
-      const handleLogout = (e: Event) => {
-        e.preventDefault();
-        clearAdminSession();
-        window.location.href = "/admin/login?logout=1";
-      };
       logoutBtn?.addEventListener("click", handleLogout);
       logoutBtnMobile?.addEventListener("click", handleLogout);
 
       loadOrders();
-      setInterval(() => loadOrders(true), 60000);
+      // Auto refresh only the first batch to keep it consistent
+      setInterval(() => {
+        if (scrollLoads === 0) loadOrders(true, false);
+      }, 60000);
     }
   }
 </script>
@@ -782,5 +867,83 @@ const description = `Trình quản trị theo dõi và xử lý đơn hàng củ
     .detail-grid {
       grid-template-columns: 1fr;
     }
+  }
+
+  /* ── PROGRESSIVE LOADING ──────────────────────────────── */
+  .admin-load-more {
+    margin-top: 32px;
+    padding: 32px;
+    text-align: center;
+    border-top: 1px dashed #e2e8f0;
+    background: linear-gradient(to bottom, transparent, #f8fafc);
+  }
+
+  .loading-sentinel {
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .loading-sentinel::after {
+    content: "";
+    width: 24px;
+    height: 24px;
+    border: 3px solid #e2e8f0;
+    border-top-color: #2563eb;
+    border-radius: 50%;
+    animation: spinner 0.8s linear infinite;
+  }
+
+  .load-more-action {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    animation: fadeIn 0.5s ease-out;
+  }
+
+  .load-more-action p {
+    font-size: 0.9rem;
+    color: #64748b;
+    margin: 0;
+    font-weight: 500;
+  }
+
+  .btn-see-all {
+    appearance: none;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    color: #1e293b;
+    padding: 10px 24px;
+    border-radius: 99px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn-see-all:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+
+  .btn-see-all:active {
+    transform: translateY(0);
+  }
+
+  @keyframes spinner {
+    to { transform: rotate(360deg); }
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 </style>

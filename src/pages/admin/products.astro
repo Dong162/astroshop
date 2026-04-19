@@ -225,6 +225,18 @@ const productIndex = allProducts.map(p => ({
           <h3>Không tìm thấy sản phẩm</h3>
           <p>Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm.</p>
         </div>
+
+        <!-- Progressive Loading Control -->
+        <div class="admin-load-more" data-product-load-area hidden>
+          <div class="loading-sentinel" data-product-sentinel></div>
+          <div class="load-more-action" data-product-see-all-wrap hidden>
+          <p>Bạn đã xem 60 sản phẩm mới nhất</p>
+          <button type="button" class="btn-see-all" data-product-see-all>
+            <span>Xem tất cả sản phẩm</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m7 13 5 5 5-5M7 6l5 5 5-5"/></svg>
+          </button>
+        </div>
+        </div>
       </div>
     </div>
   </section>
@@ -240,17 +252,17 @@ const productIndex = allProducts.map(p => ({
     const logoutBtn = document.querySelector<HTMLAnchorElement>("[data-admin-logout]");
     const logoutBtnMobile = document.querySelector<HTMLAnchorElement>("[data-admin-logout-mobile]");
 
-    const handleLogout = (e: Event) => {
-      e.preventDefault();
-      clearAdminSession();
-      window.location.href = "/admin/login?logout=1";
-    };
-    logoutBtn?.addEventListener("click", handleLogout);
-    logoutBtnMobile?.addEventListener("click", handleLogout);
-
     if (!isAdminSessionValid()) {
       window.location.href = "/admin/login";
     } else {
+      const handleLogout = (e: Event) => {
+        e.preventDefault();
+        clearAdminSession();
+        window.location.href = "/admin/login?logout=1";
+      };
+      logoutBtn?.addEventListener("click", handleLogout);
+      logoutBtnMobile?.addEventListener("click", handleLogout);
+
       const searchInput = page.querySelector<HTMLInputElement>("[data-product-search]");
       const filterSelect = page.querySelector<HTMLSelectElement>("[data-product-filter]");
       const tableBody = page.querySelector<HTMLElement>("[data-product-table-body]");
@@ -260,6 +272,14 @@ const productIndex = allProducts.map(p => ({
       const allRows = tableBody ? Array.from(tableBody.querySelectorAll("tr")) : [];
       const allCards = mobileCardsContainer ? Array.from(mobileCardsContainer.querySelectorAll(".product-mobile-card")) : [];
 
+      const loadArea = page.querySelector<HTMLElement>("[data-product-load-area]");
+      const sentinel = page.querySelector<HTMLElement>("[data-product-sentinel]");
+      const seeAllWrap = page.querySelector<HTMLElement>("[data-product-see-all-wrap]");
+      const seeAllBtn = page.querySelector<HTMLButtonElement>("[data-product-see-all]");
+
+      let currentLimit = 20;
+      let scrollLoads = 0; // Tracks how many times we've auto-loaded (limit to 2)
+
       const normalizeText = (text: string) =>
         text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d");
 
@@ -267,9 +287,9 @@ const productIndex = allProducts.map(p => ({
         const kw = normalizeText(searchInput?.value.trim() ?? "");
         const filter = filterSelect?.value ?? "all";
 
-        let visibleCount = 0;
+        let matchedTotal = 0;
+        let displayedCount = 0;
 
-        // Process both table rows and mobile cards simultaneously
         for (let i = 0; i < allRows.length; i++) {
           const row = allRows[i];
           const card = allCards[i];
@@ -278,27 +298,74 @@ const productIndex = allProducts.map(p => ({
           const popular = row.dataset.popular === "1";
           const textContent = normalizeText(row.textContent ?? "");
 
-          let show = true;
+          let matchesFilter = true;
+          if (filter === "instock" && stock === "outofstock") matchesFilter = false;
+          if (filter === "outofstock" && stock !== "outofstock") matchesFilter = false;
+          if (filter === "flash" && !flash) matchesFilter = false;
+          if (filter === "popular" && !popular) matchesFilter = false;
+          if (matchesFilter && kw && !textContent.includes(kw)) matchesFilter = false;
 
-          // Filter
-          if (filter === "instock" && stock === "outofstock") show = false;
-          if (filter === "outofstock" && stock !== "outofstock") show = false;
-          if (filter === "flash" && !flash) show = false;
-          if (filter === "popular" && !popular) show = false;
-
-          // Search
-          if (show && kw && !textContent.includes(kw)) show = false;
-
-          row.style.display = show ? "" : "none";
-          if (card) card.style.display = show ? "" : "none";
-          if (show) visibleCount++;
+          if (matchesFilter) {
+            matchedTotal++;
+            const withinLimit = matchedTotal <= currentLimit;
+            row.style.display = withinLimit ? "" : "none";
+            if (card) card.style.display = withinLimit ? "" : "none";
+            if (withinLimit) displayedCount++;
+          } else {
+            row.style.display = "none";
+            if (card) card.style.display = "none";
+          }
         }
 
-        if (emptyNode) emptyNode.hidden = visibleCount > 0;
+        if (emptyNode) emptyNode.hidden = matchedTotal > 0;
+
+        // Manage Load More UI
+        if (loadArea) {
+           const hasMoreToLoad = matchedTotal > currentLimit;
+           loadArea.hidden = !hasMoreToLoad;
+           
+           if (hasMoreToLoad) {
+              const reachedScrollLimit = scrollLoads >= 2;
+              if (sentinel) sentinel.style.display = reachedScrollLimit ? "none" : "";
+              if (seeAllWrap) seeAllWrap.hidden = !reachedScrollLimit;
+           }
+        }
       };
 
-      searchInput?.addEventListener("input", filterProducts);
-      filterSelect?.addEventListener("change", filterProducts);
+      // Intersection Observer for Infinite Scroll
+      if (sentinel) {
+        const observer = new IntersectionObserver((entries) => {
+          if (entries[0].isIntersecting && scrollLoads < 2) {
+            const kw = searchInput?.value.trim();
+            // Don't auto-load more if user is searching (keep search results manageable)
+            // Or only auto-load if there are more matches
+            scrollLoads++;
+            currentLimit += 20;
+            filterProducts();
+          }
+        }, { rootMargin: "200px" });
+        observer.observe(sentinel);
+      }
+
+      seeAllBtn?.addEventListener("click", () => {
+        currentLimit = Infinity;
+        filterProducts();
+      });
+
+      searchInput?.addEventListener("input", () => {
+         // Reset on search/filter to show top results
+         currentLimit = 20;
+         scrollLoads = 0;
+         filterProducts();
+      });
+      filterSelect?.addEventListener("change", () => {
+         currentLimit = 20;
+         scrollLoads = 0;
+         filterProducts();
+      });
+
+      // Initial run
+      filterProducts();
     }
   }
 </script>
@@ -463,5 +530,83 @@ const productIndex = allProducts.map(p => ({
     display: inline-flex;
     align-items: center;
     justify-content: center;
+  }
+
+  /* ── PROGRESSIVE LOADING ──────────────────────────────── */
+  .admin-load-more {
+    margin-top: 32px;
+    padding: 32px;
+    text-align: center;
+    border-top: 1px dashed #e2e8f0;
+    background: linear-gradient(to bottom, transparent, #f8fafc);
+  }
+
+  .loading-sentinel {
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .loading-sentinel::after {
+    content: "";
+    width: 24px;
+    height: 24px;
+    border: 3px solid #e2e8f0;
+    border-top-color: #2563eb;
+    border-radius: 50%;
+    animation: spinner 0.8s linear infinite;
+  }
+
+  .load-more-action {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    animation: fadeIn 0.5s ease-out;
+  }
+
+  .load-more-action p {
+    font-size: 0.9rem;
+    color: #64748b;
+    margin: 0;
+    font-weight: 500;
+  }
+
+  .btn-see-all {
+    appearance: none;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    color: #1e293b;
+    padding: 10px 24px;
+    border-radius: 99px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn-see-all:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+
+  .btn-see-all:active {
+    transform: translateY(0);
+  }
+
+  @keyframes spinner {
+    to { transform: rotate(360deg); }
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 </style>
