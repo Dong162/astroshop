@@ -105,3 +105,72 @@ Cloudflare sẽ phân phối web tốc độ cao hoàn toàn miễn phí.
 Bất cứ khi nào bạn chỉnh sửa giá sản phẩm, thêm sản phẩm mới hay sửa bài viết trong mã nguồn ở máy tính, bạn chỉ cần gõ 3 dòng lệnh cơ bản:
 `git add .` -> `git commit -m "Update code"` -> `git push`
 Cloudflare sẽ tự hiểu và lấy code mới cập nhật lên Web internet cho bạn ngay lập tức. Đừng lặp lại các thao tác cấu hình bên trên. Mọi thứ đã được quy hoạch hoàn toàn tự động!
+
+---
+
+### 🔔 Giai Đoạn 6: Tích Hợp Thông Báo Telegram (Tùy chọn)
+
+Để nhận thông báo ngay lập tức trên điện thoại mỗi khi có khách đặt hàng mới mà không cần check Dashboard, bạn hãy làm theo các bước sau:
+
+#### 1. Kích hoạt phần mở rộng HTTP
+Vào mục **SQL Editor** trong Supabase, tạo một Query mới, dán lệnh này và nhấn **Run**:
+```sql
+CREATE EXTENSION IF NOT EXISTS pg_net;
+```
+
+#### 2. Tạo hàm gửi tin nhắn (SQL Function)
+Cũng trong **SQL Editor**, dán đoạn mã dưới đây. 
+**Lưu ý:** Thay thế `'YOUR_BOT_TOKEN'` và `'YOUR_CHAT_ID'` bằng thông tin của bạn.
+```sql
+CREATE OR REPLACE FUNCTION notify_telegram_orders()
+RETURNS TRIGGER AS $$
+DECLARE
+  telegram_token TEXT := 'YOUR_BOT_TOKEN';
+  chat_id TEXT := 'YOUR_CHAT_ID';
+  message_text TEXT;
+BEGIN
+  -- Định dạng tin nhắn (Dựa trên cấu trúc bảng astro_orders)
+  message_text := '🛍️ **CÓ ĐƠN HÀNG MỚI!**' || CHR(10) ||
+                  '━━━━━━━━━━━━━━' || CHR(10) ||
+                  '🆔 **Mã đơn:** ' || NEW.id || CHR(10) ||
+                  '👤 **Khách hàng:** ' || COALESCE(NEW.customer_name, 'Không tên') || CHR(10) ||
+                  '📞 **SĐT:** ' || COALESCE(NEW.customer_phone, 'N/A') || CHR(10) ||
+                  '🏠 **Địa chỉ:** ' || COALESCE(NEW.shipping_address, 'N/A') || CHR(10) ||
+                  '💰 **Tổng tiền:** ' || TO_CHAR(NEW.total, 'FM999,999,999') || 'đ' || CHR(10) ||
+                  '📝 **Ghi chú:** ' || COALESCE(NEW.note, 'Trống') || CHR(10) ||
+                  '⚙️ **Trạng thái:** ' || NEW.status;
+
+  -- Gửi đến Telegram qua pg_net
+  PERFORM net.http_post(
+    url := 'https://api.telegram.org/bot' || telegram_token || '/sendMessage',
+    headers := '{"Content-Type": "application/json"}'::jsonb,
+    body := jsonb_build_object(
+      'chat_id', chat_id,
+      'text', message_text,
+      'parse_mode', 'Markdown'
+    )
+  );
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+```
+
+#### 3. Tạo Trigger kích hoạt
+Dán lệnh này vào **SQL Editor** và nhấn **Run**:
+```sql
+CREATE TRIGGER trigger_send_order_to_telegram
+AFTER INSERT ON public.astro_orders
+FOR EACH ROW
+EXECUTE FUNCTION notify_telegram_orders();
+```
+
+#### 4. Kiểm tra
+Hãy thử thực hiện một đơn hàng trên website hoặc chèn trực tiếp một dòng vào bảng `astro_orders` trong **Table Editor**. Telegram sẽ gửi thông báo đầy đủ chi tiết đơn hàng cho bạn trong tích tắc!
+
+---
+
+💡 **Lưu ý về Biến số thay đổi**:
+- **Table Name**: Dự án này sử dụng bảng `public.astro_orders`.
+- **Fields**: Các trường dữ liệu như `shipping_address`, `total`, `note` đã được khớp chính xác với mã nguồn. Nếu bạn thay đổi cấu trúc Database, hãy cập nhật lại hàm `notify_telegram_orders`.
+- **TOKEN & CHAT_ID**: Đây là thông tin bảo mật, tuyệt đối không chia sẻ công khai.
