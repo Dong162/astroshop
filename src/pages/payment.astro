@@ -62,7 +62,7 @@ const shippingFee = Number(import.meta.env.PUBLIC_DEFAULT_SHIPPING_FEE ?? 25000)
           </div>
 
           <div class="form-section">
-            <h2 class="form-section__title">
+            <h2 class="form-section__title form-section__title--small">
               <span class="form-section__num">2</span>
               Phương thức thanh toán
             </h2>
@@ -74,7 +74,6 @@ const shippingFee = Number(import.meta.env.PUBLIC_DEFAULT_SHIPPING_FEE ?? 25000)
                   <div class="payment-method-card__icon">💵</div>
                   <div>
                     <strong>Thanh toán khi nhận hàng (COD)</strong>
-                    <p>Trả tiền mặt khi nhận hàng - không phí phụ thu</p>
                   </div>
                 </div>
               </label>
@@ -668,6 +667,10 @@ const shippingFee = Number(import.meta.env.PUBLIC_DEFAULT_SHIPPING_FEE ?? 25000)
     gap: 10px;
     font-size: 1.1rem;
     margin-bottom: 20px;
+  }
+
+  .form-section__title--small {
+    font-size: 0.95rem;
   }
 
   .form-section__num {
