@@ -34,10 +34,20 @@ export function toImageCdn(src: string, size?: ThumbnailSize): string {
       
       if (size) {
         const lastDotIndex = url.pathname.lastIndexOf('.');
-        if (lastDotIndex !== -1 && !url.pathname.includes(`_${size}`)) {
-          const pathWithoutExt = url.pathname.substring(0, lastDotIndex);
+        if (lastDotIndex !== -1) {
+          let pathWithoutExt = url.pathname.substring(0, lastDotIndex);
           const ext = url.pathname.substring(lastDotIndex);
-          url.pathname = `${pathWithoutExt}_${size}${ext}`;
+          
+          // Regex to match existing size patterns like _1024x1024 at the end of the filename
+          const sizePattern = /_\d+x\d+$/;
+          
+          if (sizePattern.test(pathWithoutExt)) {
+            pathWithoutExt = pathWithoutExt.replace(sizePattern, `_${size}`);
+          } else if (!pathWithoutExt.endsWith(`_${size}`)) {
+            pathWithoutExt = `${pathWithoutExt}_${size}`;
+          }
+          
+          url.pathname = `${pathWithoutExt}${ext}`;
         }
       }
       
