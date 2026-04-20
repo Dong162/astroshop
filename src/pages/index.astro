@@ -12,9 +12,9 @@ import {
 } from "../lib/seo";
 
 const [flashDeals, hotProducts, scrollProducts] = await Promise.all([
-  getProducts({ limit: 8, flash: true }),
-  getProducts({ limit: 12, isPopular: true }),
-  getProducts({ limit: 80 })
+  getProducts({ limit: 8, flash: true, excludeOutOfStock: true }),
+  getProducts({ limit: 12, isPopular: true, excludeOutOfStock: true }),
+  getProducts({ limit: 80, excludeOutOfStock: true })
 ]);
 
 const activeProducts = scrollProducts.filter(p => p.stock_status !== "outofstock");
@@ -107,7 +107,7 @@ const structuredData = [
         </div>
         <h2>FLASH SALE</h2>
       </div>
-      <a href="#ban-chay" class="view-all-link view-all-link--red">Xem tất cả →</a>
+      <a href="/flash-sale/" class="view-all-link view-all-link--red">Xem tất cả →</a>
     </div>
 
     <div class="flash-scroll-wrap">
@@ -183,7 +183,7 @@ const structuredData = [
         <span class="section-dot"></span>
         <h2>Sản phẩm nổi bật</h2>
       </div>
-      <a href="#ban-chay" class="view-all-link">Xem tất cả →</a>
+      <a href="/noi-bat/" class="view-all-link">Xem tất cả →</a>
     </div>
 
     <div class="products-grid">

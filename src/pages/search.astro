@@ -167,8 +167,9 @@ const description = "Trang tìm kiếm sản phẩm theo từ khóa.";
       try {
         const offset = append ? allProducts.length : 0;
         const params = new URLSearchParams({
-          select: "id,name,slug,images,regular_price,sale_price,flash,status",
+          select: "id,name,slug,images,regular_price,sale_price,flash,status,stock_status",
           status: "eq.publish",
+          stock_status: "neq.outofstock",
           order: "created_at.desc",
           limit: String(PAGE_SIZE),
           offset: String(offset),

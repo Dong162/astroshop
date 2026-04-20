@@ -154,6 +154,7 @@ export interface GetProductsOptions {
   sortBy?: "created_at" | "regular_price" | "is_popular";
   order?: "asc" | "desc";
   all?: boolean;
+  excludeOutOfStock?: boolean;
 }
 
 export async function getProducts(options: GetProductsOptions = {}): Promise<Product[]> {
@@ -174,7 +175,8 @@ export async function getProducts(options: GetProductsOptions = {}): Promise<Pro
     category,
     sortBy = "created_at",
     order = "desc",
-    all = false
+    all = false,
+    excludeOutOfStock = false
   } = options;
 
   let allProducts: Product[] = [];
@@ -198,6 +200,9 @@ export async function getProducts(options: GetProductsOptions = {}): Promise<Pro
       }
       if (flash !== undefined) {
         endpoint.searchParams.set("flash", `eq.${flash}`);
+      }
+      if (excludeOutOfStock) {
+        endpoint.searchParams.set("stock_status", "neq.outofstock");
       }
       if (category) {
         endpoint.searchParams.set("categories", `cs.{"${category}"}`);
