@@ -1,11 +1,10 @@
-﻿import type { APIRoute } from "astro";
+import type { APIRoute } from "astro";
 
 export const GET: APIRoute = ({ site }) => {
   const siteUrl = (site ?? new URL("https://example.com")).toString().replace(/\/$/, "");
   const body = [
     `User-agent: *`,
     `Allow: /`,
-    `Allow: https://images.dongtaphoa.com/`,
     ``,
     `# Disallow admin and checkout pages`,
     `Disallow: /admin/`,

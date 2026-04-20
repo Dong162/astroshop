@@ -346,6 +346,20 @@ const structuredData = [
           return frag;
         };
 
+        const CHUNK_SIZE = 10;
+        const appendChunked = (items: any[], onDone?: () => void) => {
+          let i = 0;
+          const step = () => {
+            const frag = document.createDocumentFragment();
+            const end = Math.min(i + CHUNK_SIZE, items.length);
+            while (i < end) frag.appendChild(createCard(items[i++]));
+            container.appendChild(frag);
+            if (i < items.length) requestAnimationFrame(step);
+            else onDone?.();
+          };
+          requestAnimationFrame(step);
+        };
+
         const loadNextBatch = () => {
           const batch = products.slice(loadedCount, loadedCount + PAGE_SIZE);
           if (batch.length === 0) {
@@ -353,7 +367,7 @@ const structuredData = [
             return;
           }
 
-          batch.forEach((p: any) => container.appendChild(createCard(p)));
+          appendChunked(batch);
           loadedCount += batch.length;
 
           if (loadedCount >= products.length) {
@@ -381,9 +395,10 @@ const structuredData = [
         // Handle load all button
         loadAllBtn?.addEventListener("click", () => {
           const remaining = products.slice(loadedCount);
-          remaining.forEach((p: any) => container.appendChild(createCard(p)));
+          appendChunked(remaining, () => {
+            if (controls) controls.hidden = true;
+          });
           loadedCount = products.length;
-          if (controls) controls.hidden = true;
           observer.unobserve(trigger);
         });
       }

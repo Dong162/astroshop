@@ -855,6 +855,8 @@ ul, ol {
   padding: 18px;
   position: relative;
   overflow: hidden;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 300px;
 }
 
 .desc-module h3 {
@@ -948,6 +950,8 @@ ul, ol {
   border-top: 1px solid var(--line);
   margin-top: 48px;
   padding: 36px 0 0;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 400px;
 }
 
 .site-footer__grid {

@@ -67,6 +67,39 @@ const hideMobileFooter = pathname.startsWith("/cart") || pathname.startsWith("/p
     <noscript>
       <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet" />
     </noscript>
+
+    {/* ── INLINE CRITICAL CSS (above-fold) ── */}
+    <style is:inline>{`
+      :root{--bg:#f5f6fa;--surface:#fff;--surface-soft:#f1f5f9;--line:#e2e8f0;--text:#0f172a;--text-soft:#334155;--muted:#475569;--muted-light:#64748b;--primary:#2563eb;--primary-dark:#1d4ed8;--primary-light:#eff6ff;--primary-ring:rgba(37,99,235,.2);--red:#dc2626;--red-dark:#b91c1c;--red-light:#fef2f2;--red-ring:rgba(220,38,38,.18);--orange:#ea580c;--accent:#f59e0b;--success:#16a34a;--radius-xl:20px;--radius-lg:16px;--radius-md:12px;--radius-sm:8px;--radius-xs:6px;--shadow:0 2px 8px rgba(15,23,42,.07),0 1px 3px rgba(15,23,42,.05);--shadow-card:0 0 0 1px var(--line),var(--shadow);--shadow-hover:0 12px 28px -8px rgba(15,23,42,.14);--container:1240px;--header-h:68px;--utility-h:34px}
+      *,*::before,*::after{box-sizing:border-box}
+      html{-webkit-text-size-adjust:100%}
+      body{margin:0;font-family:'Be Vietnam Pro',system-ui,-apple-system,sans-serif;font-size:16px;line-height:1.75;color:var(--text);background:var(--bg);-webkit-font-smoothing:antialiased}
+      a{color:inherit;text-decoration:none}img{display:block;max-width:100%}p,h1,h2,h3,h4,h5,h6{margin:0}ul,ol{margin:0;padding:0;list-style:none}button{cursor:pointer}input,button,select,textarea{font:inherit}
+      .container{width:min(calc(100% - 32px),var(--container));margin:0 auto}
+      .main-shell{padding-top:40px;padding-bottom:60px}
+      .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
+      .utility-bar{background:#1e3a8a;color:rgba(255,255,255,.88);font-size:.8rem;height:var(--utility-h);display:flex;align-items:center}
+      .utility-bar__inner{display:flex;align-items:center;justify-content:space-between;gap:16px}
+      .utility-bar__left,.utility-bar__right{display:flex;align-items:center;gap:10px}
+      .site-header{position:sticky;top:0;z-index:100;background:#fff;border-bottom:1px solid var(--line);box-shadow:0 2px 12px rgba(15,23,42,.06)}
+      .site-header__main{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:20px;height:var(--header-h)}
+      .brand{display:flex;align-items:center;gap:10px;flex-shrink:0}
+      .brand__mark{display:grid;place-items:center;width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;flex-shrink:0;box-shadow:0 4px 10px rgba(37,99,235,.35)}
+      .brand__text{display:flex;flex-direction:column;line-height:1.1}
+      .brand__text strong{font-size:1.15rem;font-weight:800;color:var(--text)}
+      .brand__tagline{font-size:.72rem;color:var(--muted);font-weight:500}
+      .search-box{display:flex;position:relative;width:100%;max-width:520px;margin:0 auto}
+      .search-box input{width:100%;height:44px;padding:0 52px 0 18px;border:1.5px solid var(--line);border-radius:999px;background:var(--surface-soft);font-size:.9rem;color:var(--text);outline:none}
+      .search-box button{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:34px;height:34px;border-radius:999px;border:none;background:var(--primary);color:#fff;display:grid;place-items:center;padding:0}
+      .header-actions{display:flex;align-items:center;gap:4px;flex-shrink:0}
+      .main-nav{display:flex;align-items:center;gap:4px}
+      .main-nav a{padding:7px 12px;border-radius:var(--radius-sm);font-size:.88rem;font-weight:600;color:var(--text-soft);white-space:nowrap}
+      .cart-btn{position:relative;display:flex;align-items:center;justify-content:center;width:48px;height:48px;border-radius:var(--radius-sm);color:var(--text-soft)}
+      .cart-count-badge{position:absolute;top:3px;right:2px;min-width:18px;height:18px;padding:0 4px;border-radius:999px;background:var(--red);color:#fff;font-size:.68rem;font-weight:800;line-height:1;display:grid;place-items:center}
+      .cart-count-badge[hidden]{display:none}
+      .mobile-search-btn,.mobile-menu-btn{display:none}
+    `}</style>
+
     {schemaList.map((schema) => (
       <script is:inline type="application/ld+json" set:html={JSON.stringify(schema).replace(/</g, '\\u003c')} />
     ))}
