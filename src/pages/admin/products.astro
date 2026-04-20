@@ -1,32 +1,13 @@
 ---
 import AdminLayout from "../../layouts/AdminLayout.astro";
 import { buildPageTitle, SITE_NAME } from "../../lib/seo";
-import { getProducts, formatCurrency } from "../../lib/products";
+import { getProducts, formatCurrency, getProductStats } from "../../lib/products";
 
 const title = buildPageTitle("Danh sách sản phẩm");
 const description = `Xem danh sách sản phẩm đã render trên ${SITE_NAME}.`;
 
-// Fetch all products at build time
-const allProducts = await getProducts();
-const inStockProducts = allProducts.filter(p => p.stock_status !== "outofstock");
-const outOfStockProducts = allProducts.filter(p => p.stock_status === "outofstock");
-const flashProducts = allProducts.filter(p => p.flash);
-const popularProducts = allProducts.filter(p => p.is_popular);
-
-// Build JSON index for client-side search/filter
-const productIndex = allProducts.map(p => ({
-  id: p.id,
-  name: p.name,
-  slug: p.slug,
-  image: p.images[0]?.src ?? "",
-  regularPrice: p.regular_price,
-  salePrice: p.sale_price,
-  stockStatus: p.stock_status,
-  categories: p.categories,
-  flash: p.flash,
-  isPopular: p.is_popular,
-  createdAt: p.created_at ?? "",
-}));
+// Fetch stats for dashboard
+const stats = await getProductStats();
 ---
 
 <AdminLayout title={title} description={description} activePage="products">
@@ -52,7 +33,7 @@ const productIndex = allProducts.map(p => ({
         </div>
         <div class="stat-card__info">
           <p>Tổng sản phẩm</p>
-          <strong>{allProducts.length}</strong>
+          <strong>{stats.total}</strong>
         </div>
       </article>
 
@@ -65,7 +46,7 @@ const productIndex = allProducts.map(p => ({
         </div>
         <div class="stat-card__info">
           <p>Còn hàng</p>
-          <strong>{inStockProducts.length}</strong>
+          <strong>{stats.inStock}</strong>
         </div>
       </article>
 
@@ -79,7 +60,7 @@ const productIndex = allProducts.map(p => ({
         </div>
         <div class="stat-card__info">
           <p>Hết hàng</p>
-          <strong>{outOfStockProducts.length}</strong>
+          <strong>{stats.outOfStock}</strong>
         </div>
       </article>
 
@@ -91,7 +72,7 @@ const productIndex = allProducts.map(p => ({
         </div>
         <div class="stat-card__info">
           <p>Flash Sale</p>
-          <strong>{flashProducts.length}</strong>
+          <strong>{stats.flash}</strong>
         </div>
       </article>
     </div>
@@ -131,93 +112,13 @@ const productIndex = allProducts.map(p => ({
             </tr>
           </thead>
           <tbody data-product-table-body>
-            {allProducts.map(p => {
-              const displayPrice = p.sale_price ?? p.regular_price;
-              const image = p.images[0]?.src ?? "";
-              return (
-                <tr data-stock={p.stock_status} data-flash={p.flash ? "1" : "0"} data-popular={p.is_popular ? "1" : "0"}>
-                  <td class="cell-thumb">
-                    {image ? (
-                      <img src={image} alt={p.name} class="product-thumb" loading="lazy" />
-                    ) : (
-                      <div class="product-thumb-empty">📦</div>
-                    )}
-                  </td>
-                  <td>
-                    <strong class="product-name-cell">{p.name}</strong>
-                  </td>
-                  <td class="cell-slug">
-                    <code>{p.slug}</code>
-                  </td>
-                  <td>
-                    <div class="price-cell">
-                      <strong class={p.sale_price ? "price-sale" : ""}>{formatCurrency(displayPrice)}</strong>
-                      {p.sale_price && <s class="price-original">{formatCurrency(p.regular_price)}</s>}
-                    </div>
-                  </td>
-                  <td>
-                    <span class={`status-pill is-${p.stock_status === "outofstock" ? "cancelled" : "completed"}`}>
-                      {p.stock_status === "outofstock" ? "Hết hàng" : "Còn hàng"}
-                    </span>
-                  </td>
-                  <td class="cell-tags">
-                    {p.flash && <span class="tag tag--red">⚡ Flash</span>}
-                    {p.is_popular && <span class="tag tag--orange">🔥 Hot</span>}
-                    {!p.flash && !p.is_popular && <span class="tag tag--gray">—</span>}
-                  </td>
-                  <td class="cell-action">
-                    <a href={`/products/${p.slug}/`} target="_blank" class="btn-view-detail" title="Xem trang sản phẩm">
-                      Xem ↗
-                    </a>
-                  </td>
-                </tr>
-              );
-            })}
+            <!-- Rows injected by JS -->
           </tbody>
         </table>
 
         <!-- Mobile card view -->
         <div class="admin-mobile-cards" data-product-mobile-cards>
-          {allProducts.map(p => {
-            const displayPrice = p.sale_price ?? p.regular_price;
-            const image = p.images[0]?.src ?? "";
-            return (
-              <div class="mobile-card product-mobile-card" data-stock={p.stock_status} data-flash={p.flash ? "1" : "0"} data-popular={p.is_popular ? "1" : "0"}>
-                <div class="product-mobile-card__header">
-                  {image ? (
-                    <img src={image} alt={p.name} class="product-mobile-thumb" loading="lazy" />
-                  ) : (
-                    <div class="product-mobile-thumb-empty">📦</div>
-                  )}
-                  <div class="product-mobile-card__info">
-                    <strong>{p.name}</strong>
-                    <code class="product-mobile-slug">{p.slug}</code>
-                  </div>
-                </div>
-                <div class="mobile-card__row">
-                  <span class="mobile-card__label">Giá</span>
-                  <span class="mobile-card__value is-total">{formatCurrency(displayPrice)}</span>
-                </div>
-                <div class="mobile-card__row">
-                  <span class="mobile-card__label">Tình trạng</span>
-                  <span class={`status-pill is-${p.stock_status === "outofstock" ? "cancelled" : "completed"}`}>
-                    {p.stock_status === "outofstock" ? "Hết hàng" : "Còn hàng"}
-                  </span>
-                </div>
-                <div class="mobile-card__row">
-                  <span class="mobile-card__label">Tags</span>
-                  <span class="mobile-card__value">
-                    {p.flash && "⚡ Flash "}
-                    {p.is_popular && "🔥 Hot"}
-                    {!p.flash && !p.is_popular && "—"}
-                  </span>
-                </div>
-                <div class="mobile-card__footer">
-                  <a href={`/products/${p.slug}/`} target="_blank" class="btn-view-detail">Xem trang ↗</a>
-                </div>
-              </div>
-            );
-          })}
+          <!-- Cards injected by JS -->
         </div>
 
         <div class="admin-empty-state" data-product-empty hidden>
@@ -226,29 +127,93 @@ const productIndex = allProducts.map(p => ({
           <p>Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm.</p>
         </div>
 
-        <!-- Progressive Loading Control -->
+        <!-- Progressive Loading -->
         <div class="admin-load-more" data-product-load-area hidden>
           <div class="loading-sentinel" data-product-sentinel></div>
           <div class="load-more-action" data-product-see-all-wrap hidden>
-          <p>Bạn đã xem 60 sản phẩm mới nhất</p>
-          <button type="button" class="btn-see-all" data-product-see-all>
-            <span>Xem tất cả sản phẩm</span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m7 13 5 5 5-5M7 6l5 5 5-5"/></svg>
-          </button>
-        </div>
+            <p>Đã tải hết sản phẩm gợi ý</p>
+            <button type="button" class="btn-see-all" data-product-see-all>
+              <span>Tải thêm sản phẩm</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m7 13 5 5 5-5M7 6l5 5 5-5"/></svg>
+            </button>
+          </div>
         </div>
       </div>
     </div>
   </section>
+
+  <!-- TABLE ROW TEMPLATE -->
+  <template data-product-row-template>
+    <tr>
+      <td class="cell-thumb">
+        <img data-thumb alt="" class="product-thumb" loading="lazy" />
+        <div data-thumb-empty class="product-thumb-empty">📦</div>
+      </td>
+      <td>
+        <strong class="product-name-cell" data-name></strong>
+      </td>
+      <td class="cell-slug">
+        <code data-slug></code>
+      </td>
+      <td>
+        <div class="price-cell">
+          <strong data-price></strong>
+          <s class="price-original" data-price-original hidden></s>
+        </div>
+      </td>
+      <td>
+        <span class="status-pill" data-status></span>
+      </td>
+      <td class="cell-tags" data-tags>
+         <!-- Tags injected by JS -->
+      </td>
+      <td class="cell-action">
+        <a data-view-link target="_blank" class="btn-view-detail" title="Xem trang sản phẩm">
+          Xem ↗
+        </a>
+      </td>
+    </tr>
+  </template>
+
+  <!-- MOBILE CARD TEMPLATE -->
+  <template data-product-card-template>
+    <div class="mobile-card product-mobile-card">
+      <div class="product-mobile-card__header">
+        <img data-thumb alt="" class="product-mobile-thumb" loading="lazy" />
+        <div data-thumb-empty class="product-mobile-thumb-empty">📦</div>
+        <div class="product-mobile-card__info">
+          <strong data-name></strong>
+          <code class="product-mobile-slug" data-slug></code>
+        </div>
+      </div>
+      <div class="mobile-card__row">
+        <span class="mobile-card__label">Giá</span>
+        <span class="mobile-card__value is-total" data-price></span>
+      </div>
+      <div class="mobile-card__row">
+        <span class="mobile-card__label">Tình trạng</span>
+        <span class="status-pill" data-status></span>
+      </div>
+      <div class="mobile-card__row">
+        <span class="mobile-card__label">Tags</span>
+        <span class="mobile-card__value" data-tags></span>
+      </div>
+      <div class="mobile-card__footer">
+        <a data-view-link target="_blank" class="btn-view-detail">Xem trang ↗</a>
+      </div>
+    </div>
+  </template>
 </AdminLayout>
 
 <script>
-  import { clearAdminSession, isAdminSessionValid } from "../../scripts/admin-auth";
+  import { clearAdminSession, isAdminSessionValid, getAdminSessionToken } from "../../scripts/admin-auth";
 
   const page = document.querySelector<HTMLElement>("[data-admin-products]");
+  const supabaseUrl = (import.meta.env.PUBLIC_SUPABASE_URL ?? "").trim();
+  const supabaseKey = (import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? "").trim();
+  const productsTable = (import.meta.env.PUBLIC_SUPABASE_PRODUCTS_TABLE ?? "products").trim();
 
   if (page) {
-
     const logoutBtn = document.querySelector<HTMLAnchorElement>("[data-admin-logout]");
     const logoutBtnMobile = document.querySelector<HTMLAnchorElement>("[data-admin-logout-mobile]");
 
@@ -266,106 +231,237 @@ const productIndex = allProducts.map(p => ({
       const searchInput = page.querySelector<HTMLInputElement>("[data-product-search]");
       const filterSelect = page.querySelector<HTMLSelectElement>("[data-product-filter]");
       const tableBody = page.querySelector<HTMLElement>("[data-product-table-body]");
-      const mobileCardsContainer = page.querySelector<HTMLElement>("[data-product-mobile-cards]");
+      const mobileCards = page.querySelector<HTMLElement>("[data-product-mobile-cards]");
       const emptyNode = page.querySelector<HTMLElement>("[data-product-empty]");
-
-      const allRows = tableBody ? Array.from(tableBody.querySelectorAll("tr")) : [];
-      const allCards = mobileCardsContainer ? Array.from(mobileCardsContainer.querySelectorAll(".product-mobile-card")) : [];
+      
+      const rowTemplate = page.querySelector<HTMLTemplateElement>("template[data-product-row-template]");
+      const cardTemplate = page.querySelector<HTMLTemplateElement>("template[data-product-card-template]");
 
       const loadArea = page.querySelector<HTMLElement>("[data-product-load-area]");
       const sentinel = page.querySelector<HTMLElement>("[data-product-sentinel]");
       const seeAllWrap = page.querySelector<HTMLElement>("[data-product-see-all-wrap]");
       const seeAllBtn = page.querySelector<HTMLButtonElement>("[data-product-see-all]");
 
+      let allProducts: any[] = [];
+      let isLoading = false;
+      let scrollLoads = 0;
+      let hasMoreOnServer = true;
       let currentLimit = 20;
-      let scrollLoads = 0; // Tracks how many times we've auto-loaded (limit to 2)
 
-      const normalizeText = (text: string) =>
-        text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d");
+      const formatter = new Intl.NumberFormat("vi-VN", {
+        style: "currency",
+        currency: "VND",
+        maximumFractionDigits: 0
+      });
 
-      const filterProducts = () => {
-        const kw = normalizeText(searchInput?.value.trim() ?? "");
-        const filter = filterSelect?.value ?? "all";
-
-        let matchedTotal = 0;
-        let displayedCount = 0;
-
-        for (let i = 0; i < allRows.length; i++) {
-          const row = allRows[i];
-          const card = allCards[i];
-          const stock = row.dataset.stock ?? "";
-          const flash = row.dataset.flash === "1";
-          const popular = row.dataset.popular === "1";
-          const textContent = normalizeText(row.textContent ?? "");
-
-          let matchesFilter = true;
-          if (filter === "instock" && stock === "outofstock") matchesFilter = false;
-          if (filter === "outofstock" && stock !== "outofstock") matchesFilter = false;
-          if (filter === "flash" && !flash) matchesFilter = false;
-          if (filter === "popular" && !popular) matchesFilter = false;
-          if (matchesFilter && kw && !textContent.includes(kw)) matchesFilter = false;
-
-          if (matchesFilter) {
-            matchedTotal++;
-            const withinLimit = matchedTotal <= currentLimit;
-            row.style.display = withinLimit ? "" : "none";
-            if (card) card.style.display = withinLimit ? "" : "none";
-            if (withinLimit) displayedCount++;
-          } else {
-            row.style.display = "none";
-            if (card) card.style.display = "none";
-          }
+      const createRow = (p: any) => {
+        if (!rowTemplate) return document.createDocumentFragment();
+        const f = rowTemplate.content.cloneNode(true) as DocumentFragment;
+        
+        const image = p.images?.[0]?.src || "";
+        const thumbImg = f.querySelector<HTMLImageElement>("[data-thumb]");
+        const thumbEmpty = f.querySelector<HTMLElement>("[data-thumb-empty]");
+        if (image && thumbImg && thumbEmpty) {
+          thumbImg.src = image;
+          thumbImg.alt = p.name;
+          thumbEmpty.hidden = true;
+        } else if (thumbImg) {
+          thumbImg.hidden = true;
         }
 
-        if (emptyNode) emptyNode.hidden = matchedTotal > 0;
+        const name = f.querySelector<HTMLElement>("[data-name]");
+        if (name) name.textContent = p.name;
 
-        // Manage Load More UI
+        const slug = f.querySelector<HTMLElement>("[data-slug]");
+        if (slug) slug.textContent = p.slug;
+
+        const price = f.querySelector<HTMLElement>("[data-price]");
+        const displayPrice = p.sale_price ?? p.regular_price;
+        if (price) {
+          price.textContent = formatter.format(displayPrice);
+          if (p.sale_price) price.classList.add("price-sale");
+        }
+
+        const originalPrice = f.querySelector<HTMLElement>("[data-price-original]");
+        if (originalPrice && p.sale_price) {
+          originalPrice.textContent = formatter.format(p.regular_price);
+          originalPrice.hidden = false;
+        }
+
+        const status = f.querySelector<HTMLElement>("[data-status]");
+        if (status) {
+          const isOut = p.stock_status === "outofstock";
+          status.textContent = isOut ? "Hết hàng" : "Còn hàng";
+          status.className = `status-pill is-${isOut ? "cancelled" : "completed"}`;
+        }
+
+        const tags = f.querySelector<HTMLElement>("[data-tags]");
+        if (tags) {
+          tags.innerHTML = "";
+          if (p.flash) tags.innerHTML += '<span class="tag tag--red">⚡ Flash</span> ';
+          if (p.is_popular) tags.innerHTML += '<span class="tag tag--orange">🔥 Hot</span>';
+          if (!p.flash && !p.is_popular) tags.innerHTML = '<span class="tag tag--gray">—</span>';
+        }
+
+        const viewLink = f.querySelector<HTMLAnchorElement>("[data-view-link]");
+        if (viewLink) viewLink.href = `/products/${p.slug}/`;
+
+        return f;
+      };
+
+      const createCard = (p: any) => {
+        if (!cardTemplate) return document.createDocumentFragment();
+        const f = cardTemplate.content.cloneNode(true) as DocumentFragment;
+
+        const image = p.images?.[0]?.src || "";
+        const thumbImg = f.querySelector<HTMLImageElement>("[data-thumb]");
+        const thumbEmpty = f.querySelector<HTMLElement>("[data-thumb-empty]");
+        if (image && thumbImg && thumbEmpty) {
+          thumbImg.src = image;
+          thumbImg.alt = p.name;
+          thumbEmpty.hidden = true;
+        } else if (thumbImg) {
+          thumbImg.hidden = true;
+        }
+
+        const name = f.querySelector<HTMLElement>("[data-name]");
+        if (name) name.textContent = p.name;
+
+        const slug = f.querySelector<HTMLElement>("[data-slug]");
+        if (slug) slug.textContent = p.slug;
+
+        const price = f.querySelector<HTMLElement>("[data-price]");
+        const displayPrice = p.sale_price ?? p.regular_price;
+        if (price) price.textContent = formatter.format(displayPrice);
+
+        const status = f.querySelector<HTMLElement>("[data-status]");
+        if (status) {
+          const isOut = p.stock_status === "outofstock";
+          status.textContent = isOut ? "Hết hàng" : "Còn hàng";
+          status.className = `status-pill is-${isOut ? "cancelled" : "completed"}`;
+        }
+
+        const tags = f.querySelector<HTMLElement>("[data-tags]");
+        if (tags) {
+          let t = "";
+          if (p.flash) t += "⚡ Flash ";
+          if (p.is_popular) t += "🔥 Hot";
+          tags.textContent = t || "—";
+        }
+
+        const viewLink = f.querySelector<HTMLAnchorElement>("[data-view-link]");
+        if (viewLink) viewLink.href = `/products/${p.slug}/`;
+
+        return f;
+      };
+
+      const renderProducts = () => {
+        if (tableBody) {
+          tableBody.replaceChildren();
+          allProducts.forEach(p => tableBody.append(createRow(p)));
+        }
+        if (mobileCards) {
+          mobileCards.replaceChildren();
+          allProducts.forEach(p => mobileCards.append(createCard(p)));
+        }
+
+        if (emptyNode) emptyNode.hidden = allProducts.length > 0;
+        
         if (loadArea) {
-           const hasMoreToLoad = matchedTotal > currentLimit;
-           loadArea.hidden = !hasMoreToLoad;
-           
-           if (hasMoreToLoad) {
-              const reachedScrollLimit = scrollLoads >= 2;
-              if (sentinel) sentinel.style.display = reachedScrollLimit ? "none" : "";
-              if (seeAllWrap) seeAllWrap.hidden = !reachedScrollLimit;
+           loadArea.hidden = !hasMoreOnServer;
+           if (hasMoreOnServer) {
+              const reachedLimit = scrollLoads >= 2;
+              if (sentinel) sentinel.style.display = reachedLimit ? "none" : "";
+              if (seeAllWrap) seeAllWrap.hidden = !reachedLimit;
            }
         }
       };
 
-      // Intersection Observer for Infinite Scroll
+      const loadProducts = async (append = false) => {
+        if (isLoading) return;
+        isLoading = true;
+
+        try {
+          const kw = searchInput?.value.trim() || "";
+          const filter = filterSelect?.value || "all";
+          const offset = append ? allProducts.length : 0;
+          const limit = currentLimit;
+
+          const params = new URLSearchParams({
+            select: "id,name,slug,images,regular_price,sale_price,stock_status,flash,is_popular,status",
+            status: "eq.publish",
+            order: "created_at.desc",
+            limit: String(limit),
+            offset: String(offset)
+          });
+
+          if (kw) {
+             params.set("name", `ilike.*${kw}*`);
+          }
+          if (filter === "instock") params.set("stock_status", "neq.outofstock");
+          if (filter === "outofstock") params.set("stock_status", "eq.outofstock");
+          if (filter === "flash") params.set("flash", "eq.true");
+          if (filter === "popular") params.set("is_popular", "eq.true");
+
+          const token = getAdminSessionToken();
+          const res = await fetch(`${supabaseUrl}/rest/v1/${productsTable}?${params}`, {
+            headers: {
+              apikey: supabaseKey,
+              Authorization: `Bearer ${token}`
+            }
+          });
+
+          if (!res.ok) throw new Error(await res.text());
+
+          const data = await res.json();
+          if (append) {
+            allProducts = [...allProducts, ...data];
+          } else {
+            allProducts = data;
+          }
+
+          hasMoreOnServer = data.length >= limit;
+          renderProducts();
+        } catch (e) {
+          console.error("[admin-products] Load failed:", e);
+        } finally {
+          isLoading = false;
+        }
+      };
+
+      // Search debounce
+      let searchTimeout: any;
+      searchInput?.addEventListener("input", () => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+          scrollLoads = 0;
+          loadProducts();
+        }, 500);
+      });
+
+      filterSelect?.addEventListener("change", () => {
+        scrollLoads = 0;
+        loadProducts();
+      });
+
       if (sentinel) {
         const observer = new IntersectionObserver((entries) => {
-          if (entries[0].isIntersecting && scrollLoads < 2) {
-            const kw = searchInput?.value.trim();
-            // Don't auto-load more if user is searching (keep search results manageable)
-            // Or only auto-load if there are more matches
+          if (entries[0].isIntersecting && scrollLoads < 2 && hasMoreOnServer && !isLoading) {
             scrollLoads++;
-            currentLimit += 20;
-            filterProducts();
+            loadProducts(true);
           }
         }, { rootMargin: "200px" });
         observer.observe(sentinel);
       }
 
       seeAllBtn?.addEventListener("click", () => {
-        currentLimit = Infinity;
-        filterProducts();
+        scrollLoads = 0;
+        currentLimit = 100; // Load larger batches if user wants more
+        loadProducts(true);
       });
 
-      searchInput?.addEventListener("input", () => {
-         // Reset on search/filter to show top results
-         currentLimit = 20;
-         scrollLoads = 0;
-         filterProducts();
-      });
-      filterSelect?.addEventListener("change", () => {
-         currentLimit = 20;
-         scrollLoads = 0;
-         filterProducts();
-      });
-
-      // Initial run
-      filterProducts();
+      // Initial load
+      loadProducts();
     }
   }
 </script>

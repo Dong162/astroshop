@@ -6,38 +6,7 @@ import { toImageCdn } from "../lib/image-cdn";
 
 const title = buildPageTitle("Tìm kiếm sản phẩm");
 const description = "Trang tìm kiếm sản phẩm theo từ khóa.";
-const products = await getProducts();
-const activeProducts = products.filter(p => p.stock_status !== "outofstock");
-
-function normalizeSearchText(value: string): string {
-  return value
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/đ/g, "d")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-const searchIndex = activeProducts.map((product) => {
-  const image = toImageCdn(
-    product.images[0]?.src ?? "https://placehold.co/800x800/eceff3/1b2430?text=Tap+Hoa+Tech"
-  );
-  const displayPrice = product.sale_price ?? product.regular_price;
-
-  return {
-    id: product.id,
-    slug: product.slug,
-    name: product.name,
-    image,
-    flash: product.flash,
-    regularPrice: product.regular_price,
-    displayPrice,
-    searchKey: normalizeSearchText(
-      [product.name, product.short_description, ...product.categories].join(" ")
-    )
-  };
-});
+// Không tải sẵn sản phẩm ở server để giảm tải DB và thu nhỏ file HTML
 ---
 
 <MainLayout title={title} description={description} noindex>
@@ -101,23 +70,14 @@ const searchIndex = activeProducts.map((product) => {
       </article>
     </template>
 
-    <script is:inline id="search-index-data" type="application/json" set:html={JSON.stringify(searchIndex).replace(/</g, '\\u003c')} />
   </section>
 </MainLayout>
 
 <script>
-  interface SearchItem {
-    id: number;
-    slug: string;
-    name: string;
-    image: string;
-    flash: boolean;
-    regularPrice: number;
-    displayPrice: number;
-    searchKey: string;
-  }
-
   const searchPage = document.querySelector<HTMLElement>("[data-search-page]");
+  const supabaseUrl = (import.meta.env.PUBLIC_SUPABASE_URL ?? "").trim();
+  const supabaseKey = (import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? "").trim();
+  const productsTable = (import.meta.env.PUBLIC_SUPABASE_PRODUCTS_TABLE ?? "products").trim();
 
   if (searchPage) {
     const titleNode = searchPage.querySelector<HTMLElement>("[data-search-title]");
@@ -125,7 +85,6 @@ const searchIndex = activeProducts.map((product) => {
     const resultsNode = searchPage.querySelector<HTMLElement>("[data-search-results]");
     const emptyNode = searchPage.querySelector<HTMLElement>("[data-search-empty]");
     const template = searchPage.querySelector<HTMLTemplateElement>("template[data-search-card-template]");
-    const indexNode = searchPage.querySelector<HTMLScriptElement>("#search-index-data");
 
     const formatter = new Intl.NumberFormat("vi-VN", {
       style: "currency",
@@ -133,33 +92,8 @@ const searchIndex = activeProducts.map((product) => {
       maximumFractionDigits: 0
     });
 
-    const normalizeSearchText = (value: string): string =>
-      value
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/đ/g, "d")
-        .replace(/\s+/g, " ")
-        .trim();
-
-    const parsedIndex = (() => {
-      if (!indexNode?.textContent) {
-        return [] as SearchItem[];
-      }
-
-      try {
-        const data = JSON.parse(indexNode.textContent) as SearchItem[];
-        return Array.isArray(data) ? data : [];
-      } catch {
-        return [] as SearchItem[];
-      }
-    })();
-
-    const createProductNode = (product: SearchItem): DocumentFragment => {
-      if (!template) {
-        return document.createDocumentFragment();
-      }
-
+    const createProductNode = (product: any): DocumentFragment => {
+      if (!template) return document.createDocumentFragment();
       const fragment = template.content.cloneNode(true) as DocumentFragment;
       const links = fragment.querySelectorAll<HTMLAnchorElement>("[data-product-link]");
       const image = fragment.querySelector<HTMLImageElement>("[data-product-image]");
@@ -170,167 +104,126 @@ const searchIndex = activeProducts.map((product) => {
       const cartButton = fragment.querySelector<HTMLButtonElement>("[data-product-cart-button]");
       const productUrl = `/products/${product.slug}/`;
 
-      links.forEach((link) => {
-        link.href = productUrl;
-      });
-
+      links.forEach(link => link.href = productUrl);
       if (image) {
-        image.src = product.image;
+        image.src = product.images?.[0]?.src || "https://placehold.co/800x800/eceff3/1b2430?text=Tap+Hoa+Tech";
         image.alt = product.name;
       }
+      if (name) name.textContent = product.name;
+      if (badge) badge.hidden = !product.flash;
 
-      if (name) {
-        name.textContent = product.name;
-      }
-
-      if (badge) {
-        badge.hidden = !product.flash;
-      }
-
+      const displayPrice = product.sale_price ?? product.regular_price;
       if (price) {
-        price.textContent = formatter.format(product.displayPrice);
+        price.textContent = formatter.format(displayPrice);
         price.classList.add(product.flash ? "price-red" : "price-blue");
       }
-
-      if (regular && product.displayPrice < product.regularPrice) {
+      if (regular && displayPrice < product.regular_price) {
         regular.hidden = false;
-        regular.textContent = formatter.format(product.regularPrice);
+        regular.textContent = formatter.format(product.regular_price);
       }
 
       if (cartButton) {
-        cartButton.setAttribute("aria-label", `Them ${product.name} vao gio hang`);
-        cartButton.setAttribute("title", "Them vao gio hang");
         cartButton.dataset.addToCart = "";
         cartButton.dataset.productId = String(product.id);
         cartButton.dataset.productSlug = product.slug;
         cartButton.dataset.productName = product.name;
-        cartButton.dataset.productPrice = String(product.displayPrice);
-        cartButton.dataset.productRegularPrice = String(product.regularPrice);
-        cartButton.dataset.productImage = product.image;
+        cartButton.dataset.productPrice = String(displayPrice);
+        cartButton.dataset.productRegularPrice = String(product.regular_price);
+        cartButton.dataset.productImage = product.images?.[0]?.src || "";
         cartButton.dataset.productUrl = productUrl;
       }
 
       return fragment;
     };
 
-    const currentQuery = new URLSearchParams(window.location.search).get("q") ?? "";
-    
-    // --- WEB WORKER INITIALIZATION ---
-    const searchWorker = new Worker(
-      new URL("../scripts/search-worker.ts", import.meta.url),
-      { type: "module" }
-    );
-
-    searchWorker.postMessage({ type: "INIT_INDEX", payload: parsedIndex });
-
-    // --- INFINITE SCROLL & UI STATE ---
-    let matchedItems: SearchItem[] = [];
-    let loadedCount = 0;
-    let autoLoadCount = 0;
+    let allProducts: any[] = [];
+    let isLoading = false;
+    let hasMoreOnServer = true;
+    let currentQuery = new URLSearchParams(window.location.search).get("q") ?? "";
     const PAGE_SIZE = 20;
-    const MAX_AUTO_LOADS = 999; // Auto-load tất cả sản phẩm
-
-    const loadNextBatch = () => {
-      if (!resultsNode) return;
-      
-      const batch = matchedItems.slice(loadedCount, loadedCount + PAGE_SIZE);
-      if (batch.length === 0) return;
-
-      batch.forEach(item => {
-        resultsNode.append(createProductNode(item));
-      });
-
-      loadedCount += batch.length;
-      updateMeta();
-
-      if (loadedCount >= matchedItems.length) {
-        observer.unobserve(triggerNode!);
-        if (controlsNode) controlsNode.hidden = true;
-      }
-    };
 
     const updateMeta = () => {
       if (!metaNode) return;
-      if (matchedItems.length === 0) {
+      if (allProducts.length === 0) {
         metaNode.textContent = "Nhập từ khóa trên ô tìm kiếm để bắt đầu.";
       } else {
-        metaNode.textContent = `Tìm thấy ${matchedItems.length} kết quả. Đang hiển thị ${loadedCount} sản phẩm.`;
+        metaNode.textContent = `Tìm thấy hơn ${allProducts.length} kết quả phù hợp.`;
+      }
+    };
+
+    const loadProducts = async (append = false) => {
+      if (isLoading || !currentQuery) {
+        if (!currentQuery && resultsNode) resultsNode.replaceChildren();
+        return;
+      }
+      isLoading = true;
+      if (emptyNode) emptyNode.hidden = true;
+
+      try {
+        const offset = append ? allProducts.length : 0;
+        const params = new URLSearchParams({
+          select: "id,name,slug,images,regular_price,sale_price,flash,status",
+          status: "eq.publish",
+          order: "created_at.desc",
+          limit: String(PAGE_SIZE),
+          offset: String(offset),
+          name: `ilike.*${currentQuery}*`
+        });
+
+        const res = await fetch(`${supabaseUrl}/rest/v1/${productsTable}?${params}`, {
+          headers: { apikey: supabaseKey }
+        });
+        if (!res.ok) throw new Error(await res.text());
+
+        const data = await res.json();
+        if (append) {
+          allProducts = [...allProducts, ...data];
+        } else {
+          allProducts = data;
+          if (resultsNode) resultsNode.replaceChildren();
+        }
+
+        if (resultsNode) {
+          data.forEach((p: any) => resultsNode.append(createProductNode(p)));
+        }
+
+        hasMoreOnServer = data.length >= PAGE_SIZE;
+        if (emptyNode) emptyNode.hidden = allProducts.length > 0;
+        updateMeta();
+      } catch (e) {
+        console.error("[search] Load failed:", e);
+      } finally {
+        isLoading = false;
       }
     };
 
     const triggerNode = searchPage.querySelector<HTMLElement>("[data-search-trigger]");
-    const controlsNode = searchPage.querySelector<HTMLElement>("[data-search-controls]");
-    const loadAllBtn = searchPage.querySelector<HTMLButtonElement>("[data-load-all-btn]");
-    const remainingSpan = searchPage.querySelector<HTMLElement>("[data-remaining-count]");
+    if (triggerNode) {
+       const observer = new IntersectionObserver((entries) => {
+         if (entries[0].isIntersecting && hasMoreOnServer && !isLoading) {
+            loadProducts(true);
+         }
+       }, { rootMargin: "400px" });
+       observer.observe(triggerNode);
+    }
 
-    const observer = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting && loadedCount < matchedItems.length) {
-        if (autoLoadCount < MAX_AUTO_LOADS) {
-          loadNextBatch();
-          autoLoadCount++;
-        } else {
-          if (controlsNode) {
-            controlsNode.hidden = false;
-            if (remainingSpan) remainingSpan.textContent = `(${matchedItems.length - loadedCount})`;
-          }
-          observer.unobserve(triggerNode!);
-        }
-      }
-    }, { rootMargin: "200px" });
-
-    // Listen for worker results
-    searchWorker.onmessage = (e) => {
-      const { type, payload, query } = e.data;
-      if (type === "RESULTS") {
-        matchedItems = payload;
-        
-        if (matchedItems.length === 0 && query !== "") {
-          emptyNode!.hidden = false;
-        } else {
-          emptyNode!.hidden = true;
-          loadNextBatch(); // Load first batch of results
-          observer.observe(triggerNode!);
-        }
-        updateMeta();
-      }
-    };
-
-    const renderResults = (query: string) => {
-      if (!resultsNode || !metaNode || !titleNode || !emptyNode || !controlsNode || !triggerNode) {
-        return;
-      }
-
-      const normalizedQuery = normalizeSearchText(query);
-      const terms = normalizedQuery.split(" ").filter(Boolean);
-
-      titleNode.textContent = query ? `Kết quả tìm kiếm: ${query}` : "Tìm kiếm sản phẩm";
-      
-      // Reset state and prepare for new search
-      resultsNode.replaceChildren();
-      observer.unobserve(triggerNode);
-      emptyNode.hidden = true; // Ensure empty state is hidden while searching
-      controlsNode.hidden = true;
-      autoLoadCount = 0;
-      loadedCount = 0;
-
-      // Delegate search to worker
-      searchWorker.postMessage({ type: "SEARCH", payload: { query, terms } });
-    };
-
-    loadAllBtn?.addEventListener("click", () => {
-      if (!resultsNode || !controlsNode) return;
-      
-      const remaining = matchedItems.slice(loadedCount);
-      remaining.forEach(item => {
-        resultsNode.append(createProductNode(item));
-      });
-      
-      loadedCount = matchedItems.length;
-      updateMeta();
-      controlsNode.hidden = true;
+    // Listen to GLOBAL search events (if any) or just the URL
+    window.addEventListener("popstate", () => {
+      currentQuery = new URLSearchParams(window.location.search).get("q") ?? "";
+      if (titleNode) titleNode.textContent = currentQuery ? `Kết quả: ${currentQuery}` : "Tìm kiếm sản phẩm";
+      loadProducts(false);
     });
 
-    renderResults(currentQuery.trim());
+    // Check for custom search event from header
+    document.addEventListener("app:search", (e: any) => {
+       currentQuery = e.detail.query;
+       if (titleNode) titleNode.textContent = currentQuery ? `Kết quả: ${currentQuery}` : "Tìm kiếm sản phẩm";
+       loadProducts(false);
+    });
+
+    // Initial load
+    if (titleNode) titleNode.textContent = currentQuery ? `Kết quả: ${currentQuery}` : "Tìm kiếm sản phẩm";
+    loadProducts(false);
   }
 </script>
 

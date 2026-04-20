@@ -11,12 +11,13 @@ import {
   SITE_NAME
 } from "../lib/seo";
 
-const products = await getProducts();
-const activeProducts = products.filter(p => p.stock_status !== "outofstock");
-const flashDeals = activeProducts.filter((product) => product.flash).slice(0, 8);
-const hotProducts = [...activeProducts]
-  .sort((a, b) => Number(b.is_popular) - Number(a.is_popular) || b.id - a.id)
-  .slice(0, 12);
+const [flashDeals, hotProducts, scrollProducts] = await Promise.all([
+  getProducts({ limit: 8, flash: true }),
+  getProducts({ limit: 12, isPopular: true }),
+  getProducts({ limit: 80 })
+]);
+
+const activeProducts = scrollProducts.filter(p => p.stock_status !== "outofstock");
 const heroImage = toImageCdn(flashDeals[0]?.images[0]?.src ?? hotProducts[0]?.images[0]?.src ?? "");
 const siteUrl = Astro.site?.toString() ?? "https://example.com";
 const title = buildPageTitle("Phụ kiện công nghệ và deal mỗi ngày");
