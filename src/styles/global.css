@@ -14,8 +14,8 @@
 
   --text: #0f172a;
   --text-soft: #334155;
-  --muted: #475569;
-  --muted-light: #64748b;
+  --muted: #334155;
+  --muted-light: #475569;
 
   --primary: #2563eb;
   --primary-dark: #1d4ed8;
@@ -523,7 +523,7 @@ ul, ol {
 }
 
 .product-badge--hot {
-  background: var(--orange);
+  background: #9a3412;
   color: #fff;
 }
 
@@ -531,8 +531,8 @@ ul, ol {
   position: absolute;
   top: 10px;
   right: 10px;
-  background: #fee2e2;
-  color: var(--red);
+  background: #991b1b;
+  color: #fff;
   padding: 3px 8px;
   border-radius: var(--radius-xs);
   font-size: 0.72rem;
@@ -1462,11 +1462,25 @@ ul, ol {
 
 .sticky-btn--phone {
   background: linear-gradient(135deg, #16a34a, #15803d);
+}
+
+.sticky-btn--phone::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: rgba(22, 163, 74, 0.4);
   animation: phonePulse 2.4s ease-in-out infinite;
+  will-change: transform, opacity;
+  pointer-events: none;
+  z-index: -1;
 }
 
 .sticky-btn--phone:hover {
   background: linear-gradient(135deg, #15803d, #166534);
+}
+
+.sticky-btn--phone:hover::after {
   animation: none;
 }
 
@@ -1475,8 +1489,8 @@ ul, ol {
 }
 
 @keyframes phonePulse {
-  0%, 100% { box-shadow: 0 4px 16px rgba(0,0,0,0.18), 0 0 0 0 rgba(22, 163, 74, 0.5); }
-  50%       { box-shadow: 0 4px 16px rgba(0,0,0,0.18), 0 0 0 10px rgba(22, 163, 74, 0); }
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50%       { transform: scale(1.35); opacity: 0; }
 }
 
 /* Entrance animation on page load */

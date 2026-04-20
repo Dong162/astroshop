@@ -12,8 +12,8 @@ import {
 } from "../lib/seo";
 
 const [flashDeals, hotProducts, scrollProducts] = await Promise.all([
-  getProducts({ limit: 8, flash: true, excludeOutOfStock: true }),
-  getProducts({ limit: 12, isPopular: true, excludeOutOfStock: true }),
+  getProducts({ limit: 6, flash: true, excludeOutOfStock: true }),
+  getProducts({ limit: 8, isPopular: true, excludeOutOfStock: true }),
   getProducts({ limit: 80, excludeOutOfStock: true })
 ]);
 
@@ -646,7 +646,7 @@ const structuredData = [
   }
 
   .section-head--sale .section-head__title h2 {
-    color: #dc2626;
+    color: #991b1b;
     font-weight: 800;
     letter-spacing: -0.5px;
   }
@@ -666,7 +666,7 @@ const structuredData = [
     display: inline-flex;
     padding: 3px 10px;
     background: #fee2e2;
-    color: #dc2626;
+    color: #991b1b;
     border-radius: 999px;
     font-size: 0.75rem;
     font-weight: 600;
@@ -684,11 +684,11 @@ const structuredData = [
   }
 
   .view-all-link--red {
-    color: #dc2626;
+    color: #991b1b;
   }
 
   .view-all-link--red:hover {
-    color: #b91c1c;
+    color: #7f1d1d;
   }
 
   /* Flash scroll on mobile */
