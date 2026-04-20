@@ -38,7 +38,7 @@ const description = "Trang tìm kiếm sản phẩm theo từ khóa.";
     <template data-search-card-template>
       <article class="product-card">
         <a class="product-card__image" data-product-link>
-          <img data-product-image alt="" loading="lazy" />
+          <img data-product-image alt="" loading="lazy" onerror="this.onerror=null; this.src=this.src.replace(/_256x256|_512x512/, '')" />
           <div class="product-badge product-badge--red" data-product-badge hidden>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" /></svg>
             <span>Flash Sale</span>

@@ -121,7 +121,13 @@ const structuredData = [
           return (
             <article class="product-card">
               <a class="product-card__image" href={productUrl}>
-                <img src={image} alt={product.name} loading={isLcp ? "eager" : "lazy"} fetchpriority={isLcp ? "high" : "auto"} />
+                <img 
+                  src={image} 
+                  alt={product.name} 
+                  loading={isLcp ? "eager" : "lazy"} 
+                  fetchpriority={isLcp ? "high" : "auto"} 
+                  onerror="this.onerror=null; this.src=this.src.replace(/_256x256|_512x512/, '')"
+                />
                 <div class="product-badge product-badge--red">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
                   Flash Sale
@@ -214,7 +220,7 @@ const structuredData = [
   <template data-product-card-template>
     <article class="product-card">
       <a class="product-card__image" data-product-link>
-        <img data-product-image alt="" loading="lazy" />
+        <img data-product-image alt="" loading="lazy" onerror="this.onerror=null; this.src=this.src.replace(/_256x256|_512x512/, '')" />
         <div class="product-badge product-badge--red" data-product-badge-flash hidden>
           <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
           Flash
