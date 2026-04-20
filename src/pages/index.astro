@@ -114,7 +114,7 @@ const structuredData = [
       <div class="flash-grid">
         {flashDeals.map((product, index) => {
           const productUrl = buildProductUrl(product.slug);
-          const image = toImageCdn(product.images[0]?.src ?? "https://placehold.co/500x500/f3f4f6/111827?text=Flash");
+          const image = toImageCdn(product.images[0]?.src ?? "https://placehold.co/500x500/f3f4f6/111827?text=Flash", "256x256");
           const displayPrice = product.sale_price ?? product.regular_price;
           const isLcp = index < 4;
 
@@ -254,7 +254,7 @@ const structuredData = [
     name: p.name,
     regularPrice: p.regular_price,
     salePrice: p.sale_price,
-    image: toImageCdn(p.images[0]?.src ?? ""),
+    image: toImageCdn(p.images[0]?.src ?? "", "256x256"),
     flash: p.flash,
     isPopular: p.is_popular
   }))).replace(/</g, '\\u003c')} />

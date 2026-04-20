@@ -9,7 +9,7 @@ interface Props {
 
 const { product } = Astro.props;
 const displayPrice = product.sale_price ?? product.regular_price;
-const image = toImageCdn(product.images[0]?.src ?? "https://placehold.co/800x800/eceff3/1b2430?text=Đông+Tạp+Hóa");
+const image = toImageCdn(product.images[0]?.src ?? "https://placehold.co/800x800/eceff3/1b2430?text=Đông+Tạp+Hóa", "256x256");
 const productUrl = `/products/${product.slug}/`;
 const discountPercent = product.sale_price
   ? Math.max(1, Math.round((1 - product.sale_price / product.regular_price) * 100))

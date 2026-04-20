@@ -118,7 +118,7 @@ const structuredData = [
               data-image={image.src}
               aria-label={`Xem ảnh ${index + 1}`}
             >
-              <img src={image.src} alt={`${product.name} - ảnh ${index + 1}`} loading="lazy" />
+              <img src={toImageCdn(image.src, "256x256")} alt={`${product.name} - ảnh ${index + 1}`} loading="lazy" />
             </button>
           ))}
         </div>
@@ -290,7 +290,7 @@ const structuredData = [
     name: p.name,
     regularPrice: p.regular_price,
     salePrice: p.sale_price,
-    image: toImageCdn(p.images[0]?.src ?? ""),
+    image: toImageCdn(p.images[0]?.src ?? "", "256x256"),
     flash: p.flash,
     isPopular: p.is_popular
   }))).replace(/</g, '\\u003c')} />

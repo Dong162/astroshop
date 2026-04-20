@@ -74,6 +74,8 @@ const description = "Trang tìm kiếm sản phẩm theo từ khóa.";
 </MainLayout>
 
 <script>
+  import { toImageCdn } from "../lib/image-cdn";
+
   const searchPage = document.querySelector<HTMLElement>("[data-search-page]");
   const supabaseUrl = (import.meta.env.PUBLIC_SUPABASE_URL ?? "").trim();
   const supabaseKey = (import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? "").trim();
@@ -104,9 +106,11 @@ const description = "Trang tìm kiếm sản phẩm theo từ khóa.";
       const cartButton = fragment.querySelector<HTMLButtonElement>("[data-product-cart-button]");
       const productUrl = `/products/${product.slug}/`;
 
+      const cdnImage = toImageCdn(product.images?.[0]?.src ?? "https://placehold.co/800x800/eceff3/1b2430?text=Tap+Hoa+Tech", "256x256");
+
       links.forEach(link => link.href = productUrl);
       if (image) {
-        image.src = product.images?.[0]?.src || "https://placehold.co/800x800/eceff3/1b2430?text=Tap+Hoa+Tech";
+        image.src = cdnImage;
         image.alt = product.name;
       }
       if (name) name.textContent = product.name;
@@ -129,9 +133,10 @@ const description = "Trang tìm kiếm sản phẩm theo từ khóa.";
         cartButton.dataset.productName = product.name;
         cartButton.dataset.productPrice = String(displayPrice);
         cartButton.dataset.productRegularPrice = String(product.regular_price);
-        cartButton.dataset.productImage = product.images?.[0]?.src || "";
+        cartButton.dataset.productImage = cdnImage;
         cartButton.dataset.productUrl = productUrl;
       }
+
 
       return fragment;
     };
