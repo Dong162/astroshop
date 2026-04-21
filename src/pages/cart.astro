@@ -174,10 +174,7 @@ const shippingFee = Number(import.meta.env.PUBLIC_DEFAULT_SHIPPING_FEE ?? 25000)
       const links = fragment.querySelectorAll<HTMLAnchorElement>("[data-cart-item-link]");
 
       if (card) card.dataset.productId = String(item.id);
-      if (image) { 
-        image.src = toImageCdn(item.image, "128x128"); 
-        image.alt = item.name; 
-      }
+      if (image) { image.src = item.image; image.alt = item.name; }
       if (name) name.textContent = item.name;
       if (price) price.textContent = formatCartCurrency(item.price * item.quantity);
       if (unitPrice) unitPrice.textContent = formatCartCurrency(item.price);

@@ -38,7 +38,7 @@ const description = "Trang tìm kiếm sản phẩm theo từ khóa.";
     <template data-search-card-template>
       <article class="product-card">
         <a class="product-card__image" data-product-link>
-          <img data-product-image alt="" loading="lazy" onerror="this.onerror=null; this.src=this.src.replace(/[_-]128x128|[_-]256x256|[_-]512x512/, '')" />
+          <img data-product-image alt="" loading="lazy" onerror="this.onerror=null; this.src=this.src.replace(/[_-]256x256|[_-]512x512/, '')" />
           <div class="product-badge product-badge--red" data-product-badge hidden>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" /></svg>
             <span>Flash Sale</span>
@@ -106,15 +106,11 @@ const description = "Trang tìm kiếm sản phẩm theo từ khóa.";
       const cartButton = fragment.querySelector<HTMLButtonElement>("[data-product-cart-button]");
       const productUrl = `/products/${product.slug}/`;
 
-      const imgUri = product.images?.[0]?.src ?? "https://placehold.co/800x800/eceff3/1b2430?text=Tap+Hoa+Tech";
-      const mobileImage = toImageCdn(imgUri, "128x128");
-      const desktopImage = toImageCdn(imgUri, "256x256");
+      const cdnImage = toImageCdn(product.images?.[0]?.src ?? "https://placehold.co/800x800/eceff3/1b2430?text=Tap+Hoa+Tech", "256x256");
 
       links.forEach(link => link.href = productUrl);
       if (image) {
-        image.src = desktopImage;
-        image.srcset = `${mobileImage} 128w, ${desktopImage} 256w`;
-        image.sizes = "(max-width: 768px) 128px, 256px";
+        image.src = cdnImage;
         image.alt = product.name;
       }
       if (name) name.textContent = product.name;
@@ -137,7 +133,7 @@ const description = "Trang tìm kiếm sản phẩm theo từ khóa.";
         cartButton.dataset.productName = product.name;
         cartButton.dataset.productPrice = String(displayPrice);
         cartButton.dataset.productRegularPrice = String(product.regular_price);
-        cartButton.dataset.productImage = desktopImage;
+        cartButton.dataset.productImage = cdnImage;
         cartButton.dataset.productUrl = productUrl;
       }
 

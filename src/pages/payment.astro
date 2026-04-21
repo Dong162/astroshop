@@ -328,7 +328,7 @@ const shippingFee = Number(import.meta.env.PUBLIC_DEFAULT_SHIPPING_FEE ?? 25000)
           const totalNodeItem = fragment.querySelector<HTMLElement>("[data-payment-item-total]");
 
           if (imageNode) {
-            imageNode.src = toImageCdn(item.image, "128x128");
+            imageNode.src = item.image;
             imageNode.alt = item.name;
           }
           if (nameNode) nameNode.textContent = item.name;

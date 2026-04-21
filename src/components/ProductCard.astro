@@ -9,9 +9,7 @@ interface Props {
 
 const { product } = Astro.props;
 const displayPrice = product.sale_price ?? product.regular_price;
-const imageMobile = toImageCdn(product.images[0]?.src ?? "https://placehold.co/800x800/eceff3/1b2430?text=Đông+Tạp+Hóa", "128x128");
-const imageDesktop = toImageCdn(product.images[0]?.src ?? "https://placehold.co/800x800/eceff3/1b2430?text=Đông+Tạp+Hóa", "256x256");
-const image = imageDesktop; // Fallback for src attribute
+const image = toImageCdn(product.images[0]?.src ?? "https://placehold.co/800x800/eceff3/1b2430?text=Đông+Tạp+Hóa", "256x256");
 const productUrl = `/products/${product.slug}/`;
 const discountPercent = product.sale_price
   ? Math.max(1, Math.round((1 - product.sale_price / product.regular_price) * 100))
@@ -22,11 +20,9 @@ const discountPercent = product.sale_price
   <a class="product-card__image" href={productUrl}>
     <img 
       src={image} 
-      srcset={`${imageMobile} 128w, ${imageDesktop} 256w`}
-      sizes="(max-width: 768px) 128px, 256px"
       alt={product.name} 
       loading="lazy" 
-      onerror="this.onerror=null; this.src=this.src.replace(/[_-]128x128|[_-]256x256|[_-]512x512/, '')"
+      onerror="this.onerror=null; this.src=this.src.replace(/[_-]256x256|[_-]512x512/, '')"
     />
     {product.flash ? (
       <div class="product-badge product-badge--red">
