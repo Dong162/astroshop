@@ -103,7 +103,7 @@ const structuredData = [
           alt={product.name}
           loading="eager"
           fetchpriority="high"
-          onerror="this.onerror=null; this.src=this.src.replace(/[_-]256x256|[_-]512x512/, '')"
+          onerror="this.onerror=null; this.src=this.src.replace(/[_-]128x128|[_-]256x256|[_-]512x512/, '')"
         />
         {discountPercent > 0 && (
           <div class="gallery-discount-badge">-{discountPercent}%</div>
@@ -120,10 +120,10 @@ const structuredData = [
               aria-label={`Xem ảnh ${index + 1}`}
             >
               <img 
-                src={toImageCdn(image.src, "256x256")} 
+                src={toImageCdn(image.src, "128x128")} 
                 alt={`${product.name} - ảnh ${index + 1}`} 
                 loading="lazy" 
-                onerror="this.onerror=null; this.src=this.src.replace(/[_-]256x256|[_-]512x512/, '')"
+                onerror="this.onerror=null; this.src=this.src.replace(/[_-]128x128|[_-]256x256|[_-]512x512/, '')"
               />
             </button>
           ))}
@@ -256,7 +256,7 @@ const structuredData = [
   <template data-product-card-template>
     <article class="product-card">
       <a class="product-card__image" data-product-link>
-        <img data-product-image alt="" loading="lazy" onerror="this.onerror=null; this.src=this.src.replace(/[_-]256x256|[_-]512x512/, '')" />
+        <img data-product-image alt="" loading="lazy" onerror="this.onerror=null; this.src=this.src.replace(/[_-]128x128|[_-]256x256|[_-]512x512/, '')" />
         <div class="product-badge product-badge--red" data-product-badge-flash hidden>
           <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
           Flash
@@ -296,7 +296,7 @@ const structuredData = [
     name: p.name,
     regularPrice: p.regular_price,
     salePrice: p.sale_price,
-    image: toImageCdn(p.images[0]?.src ?? "", "256x256"),
+    image: p.images[0]?.src ?? "",
     flash: p.flash,
     isPopular: p.is_popular
   }))).replace(/</g, '\\u003c')} />
@@ -507,7 +507,14 @@ const structuredData = [
           links.forEach(l => l.href = productUrl);
 
           const img = frag.querySelector<HTMLImageElement>("[data-product-image]");
-          if (img) { img.src = product.image; img.alt = product.name; }
+          if (img) { 
+            const mobileUrl = toImageCdn(product.image, "128x128");
+            const desktopUrl = toImageCdn(product.image, "256x256");
+            img.src = desktopUrl;
+            img.srcset = `${mobileUrl} 128w, ${desktopUrl} 256w`;
+            img.sizes = "(max-width: 768px) 128px, 256px";
+            img.alt = product.name; 
+          }
 
           const name = frag.querySelector<HTMLElement>("[data-product-name]");
           if (name) name.textContent = product.name;
@@ -549,7 +556,7 @@ const structuredData = [
             cartBtn.dataset.productName = product.name;
             cartBtn.dataset.productPrice = String(product.salePrice ?? product.regularPrice);
             cartBtn.dataset.productRegularPrice = String(product.regularPrice);
-            cartBtn.dataset.productImage = product.image;
+            cartBtn.dataset.productImage = toImageCdn(product.image, "256x256");
             cartBtn.dataset.productUrl = productUrl;
           }
 

@@ -11,7 +11,7 @@ const CDN_HOST = "images.dongtaphoa.com";
 /**
  * Image sizes supported by the CDN suffix pattern.
  */
-export type ThumbnailSize = "256x256" | "512x512";
+export type ThumbnailSize = "128x128" | "256x256" | "512x512";
 
 /**
  * Convert an image URL to go through the image CDN proxy.
