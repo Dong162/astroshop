@@ -22,7 +22,7 @@ const discountPercent = product.sale_price
       src={image} 
       alt={product.name} 
       loading="lazy" 
-      onerror="this.onerror=null; this.src=this.src.replace(/_256x256|_512x512/, '')"
+      onerror="this.onerror=null; this.src=this.src.replace(/[_-]256x256|[_-]512x512/, '')"
     />
     {product.flash ? (
       <div class="product-badge product-badge--red">
