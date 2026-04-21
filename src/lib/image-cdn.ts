@@ -39,13 +39,17 @@ export function toImageCdn(src: string, size?: ThumbnailSize): string {
           const ext = url.pathname.substring(lastDotIndex);
           
           const match_1024 = pathWithoutExt.match(/([_-])1024x1024$/);
+          const match_dash_num = pathWithoutExt.match(/-[1-5]$/);
           
           if (match_1024) {
-            // Keep the same separator (_ or -)
+            // Case 1 & 2: Keep the same separator (_ or -) for 1024 conversion
             const separator = match_1024[1];
             pathWithoutExt = pathWithoutExt.replace(/[_-]1024x1024$/, `${separator}${size}`);
+          } else if (match_dash_num) {
+            // Case 3: Ends with -1, -2, etc. -> add -size
+            pathWithoutExt = `${pathWithoutExt}-${size}`;
           } else if (!pathWithoutExt.endsWith(`_${size}`) && !pathWithoutExt.endsWith(`-${size}`)) {
-            // Other cases: Add _size suffix (if not already present)
+            // Case 4: Other cases -> Add _size suffix
             pathWithoutExt = `${pathWithoutExt}_${size}`;
           }
           

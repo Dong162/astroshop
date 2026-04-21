@@ -91,7 +91,7 @@ const structuredData = [
       article.className = "product-card";
       article.innerHTML = `
         <a class="product-card__image" href="${url}">
-          <img src="${img}" alt="${p.name}" loading="lazy" onerror="this.onerror=null; this.src=this.src.replace(/_256x256|_512x512/, '')"/>
+          <img src="${img}" alt="${p.name}" loading="lazy" onerror="this.onerror=null; this.src=this.src.replace(/[_-]256x256|[_-]512x512/, '')"/>
           <div class="product-badge product-badge--hot">Nổi bật</div>
           ${disc > 0 ? `<div class="product-discount-tag">-${disc}%</div>` : ""}
         </a>
