@@ -38,19 +38,20 @@ export function toImageCdn(src: string, size?: ThumbnailSize): string {
           let pathWithoutExt = url.pathname.substring(0, lastDotIndex);
           const ext = url.pathname.substring(lastDotIndex);
           
-          const match_1024 = pathWithoutExt.match(/([_-])1024x1024$/);
-          const match_dash_num = pathWithoutExt.match(/-[1-5]$/);
+          // 1. Unified Regex for dimension suffixes: _1024x1024, -800x600, etc.
+          const sizeRegex = /([_-])\d+x\d+$/;
+          const match = pathWithoutExt.match(sizeRegex);
           
-          if (match_1024) {
-            // Case 1 & 2: Keep the same separator (_ or -) for 1024 conversion
-            const separator = match_1024[1];
-            pathWithoutExt = pathWithoutExt.replace(/[_-]1024x1024$/, `${separator}${size}`);
-          } else if (match_dash_num) {
-            // Case 3: Ends with -1, -2, etc. -> add -size
-            pathWithoutExt = `${pathWithoutExt}-${size}`;
-          } else if (!pathWithoutExt.endsWith(`_${size}`) && !pathWithoutExt.endsWith(`-${size}`)) {
-            // Case 4: Other cases -> Add _size suffix
-            pathWithoutExt = `${pathWithoutExt}_${size}`;
+          if (match) {
+            // Case A: Replace existing size suffix, preserving the original separator (_ or -)
+            const separator = match[1];
+            pathWithoutExt = pathWithoutExt.replace(sizeRegex, `${separator}${size}`);
+          } else {
+            // Case B: General appending (including numeric suffixes like -1, -2, -3, -4)
+            // Only append if not already present
+            if (!pathWithoutExt.endsWith(`_${size}`) && !pathWithoutExt.endsWith(`-${size}`)) {
+              pathWithoutExt = `${pathWithoutExt}_${size}`;
+            }
           }
           
           url.pathname = `${pathWithoutExt}${ext}`;
