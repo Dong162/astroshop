@@ -19,6 +19,20 @@ const description = "Trang tìm kiếm sản phẩm theo từ khóa.";
 
       <div class="products-grid" data-search-results></div>
 
+      <div class="products-grid skeleton-grid" data-search-loading hidden>
+        <article class="product-card skeleton-card">
+          <div class="skeleton-img"></div>
+          <div class="skeleton-body">
+            <div class="skeleton-line skeleton-title"></div>
+            <div class="skeleton-line skeleton-price"></div>
+            <div class="skeleton-btn"></div>
+          </div>
+        </article>
+        <article class="product-card skeleton-card"><div class="skeleton-img"></div><div class="skeleton-body"><div class="skeleton-line skeleton-title"></div><div class="skeleton-line skeleton-price"></div><div class="skeleton-btn"></div></div></article>
+        <article class="product-card skeleton-card"><div class="skeleton-img"></div><div class="skeleton-body"><div class="skeleton-line skeleton-title"></div><div class="skeleton-line skeleton-price"></div><div class="skeleton-btn"></div></div></article>
+        <article class="product-card skeleton-card"><div class="skeleton-img"></div><div class="skeleton-body"><div class="skeleton-line skeleton-title"></div><div class="skeleton-line skeleton-price"></div><div class="skeleton-btn"></div></div></article>
+      </div>
+
       <div class="empty-state" data-search-empty hidden>
         <h2>Không tìm thấy sản phẩm phù hợp</h2>
         <p>Thử đổi từ khóa ngắn gọn hơn hoặc bỏ dấu tiếng Việt.</p>
@@ -86,6 +100,7 @@ const description = "Trang tìm kiếm sản phẩm theo từ khóa.";
     const metaNode = searchPage.querySelector<HTMLElement>("[data-search-meta]");
     const resultsNode = searchPage.querySelector<HTMLElement>("[data-search-results]");
     const emptyNode = searchPage.querySelector<HTMLElement>("[data-search-empty]");
+    const loadingNode = searchPage.querySelector<HTMLElement>("[data-search-loading]");
     const template = searchPage.querySelector<HTMLTemplateElement>("template[data-search-card-template]");
 
     const formatter = new Intl.NumberFormat("vi-VN", {
@@ -149,8 +164,12 @@ const description = "Trang tìm kiếm sản phẩm theo từ khóa.";
 
     const updateMeta = () => {
       if (!metaNode) return;
-      if (allProducts.length === 0) {
+      if (isLoading && currentQuery) {
+        metaNode.textContent = `Đang tìm kiếm kết quả cho "${currentQuery}"...`;
+      } else if (allProducts.length === 0 && !currentQuery) {
         metaNode.textContent = "Nhập từ khóa trên ô tìm kiếm để bắt đầu.";
+      } else if (allProducts.length === 0 && currentQuery) {
+        metaNode.textContent = `Không tìm thấy kết quả nào cho "${currentQuery}".`;
       } else {
         metaNode.textContent = `Tìm thấy hơn ${allProducts.length} kết quả phù hợp.`;
       }
@@ -158,11 +177,19 @@ const description = "Trang tìm kiếm sản phẩm theo từ khóa.";
 
     const loadProducts = async (append = false) => {
       if (isLoading || !currentQuery) {
-        if (!currentQuery && resultsNode) resultsNode.replaceChildren();
+        if (!currentQuery && resultsNode) {
+          resultsNode.replaceChildren();
+          updateMeta();
+        }
         return;
       }
       isLoading = true;
       if (emptyNode) emptyNode.hidden = true;
+      if (!append) {
+        if (resultsNode) resultsNode.hidden = true;
+        if (loadingNode) loadingNode.hidden = false;
+        updateMeta();
+      }
 
       try {
         const offset = append ? allProducts.length : 0;
@@ -194,12 +221,14 @@ const description = "Trang tìm kiếm sản phẩm theo từ khóa.";
         }
 
         hasMoreOnServer = data.length >= PAGE_SIZE;
-        if (emptyNode) emptyNode.hidden = allProducts.length > 0;
-        updateMeta();
       } catch (e) {
         console.error("[search] Load failed:", e);
       } finally {
         isLoading = false;
+        if (loadingNode) loadingNode.hidden = true;
+        if (resultsNode) resultsNode.hidden = false;
+        if (emptyNode) emptyNode.hidden = allProducts.length > 0;
+        updateMeta();
       }
     };
 
@@ -283,6 +312,65 @@ const description = "Trang tìm kiếm sản phẩm theo từ khóa.";
     .search-page__box {
       padding: 16px;
     }
+  }
+
+  /* ── SKELETON LOADER ──────────────────────── */
+  .skeleton-grid {
+    margin-bottom: 24px;
+  }
+  
+  .skeleton-card {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .skeleton-img {
+    width: 100%;
+    aspect-ratio: 1/1;
+    background: var(--surface-soft);
+    animation: pulse 1.5s infinite ease-in-out;
+  }
+  
+  .skeleton-body {
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .skeleton-line {
+    height: 16px;
+    background: var(--surface-soft);
+    border-radius: 4px;
+    animation: pulse 1.5s infinite ease-in-out;
+  }
+  
+  .skeleton-title {
+    width: 80%;
+  }
+  
+  .skeleton-price {
+    width: 50%;
+    height: 20px;
+  }
+  
+  .skeleton-btn {
+    height: 36px;
+    width: 100%;
+    background: var(--surface-soft);
+    border-radius: var(--radius-sm);
+    margin-top: auto;
+    animation: pulse 1.5s infinite ease-in-out;
+  }
+  
+  @keyframes pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 0.3; }
+    100% { opacity: 0.6; }
   }
 
   /* ── SEARCH PAGINATION ────────────────────── */

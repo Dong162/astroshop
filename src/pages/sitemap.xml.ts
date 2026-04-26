@@ -24,7 +24,7 @@ function toLastModified(value: string | undefined): string | null {
 
 export const GET: APIRoute = async ({ site }) => {
   const siteUrl = (site ?? new URL("https://example.com")).toString();
-  const products = await getProducts();
+  const products = await getProducts({ all: true });
   const urls = [
     {
       loc: buildAbsoluteUrl("/", siteUrl),

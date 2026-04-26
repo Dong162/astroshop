@@ -1,7 +1,7 @@
 import { sampleProducts } from "../data/sample-products";
 import type { Product } from "../types/product";
 
-const PRODUCT_COLUMNS = [
+export const PRODUCT_DETAIL_COLUMNS = [
   "id",
   "name",
   "type",
@@ -16,6 +16,24 @@ const PRODUCT_COLUMNS = [
   "short_description",
   "stock_status",
   "stock_quantity",
+  "is_popular",
+  "flash",
+  "flash_end_time",
+  "created_at",
+  "updated_at",
+  "status"
+].join(",");
+
+export const PRODUCT_LIST_COLUMNS = [
+  "id",
+  "name",
+  "type",
+  "slug",
+  "categories",
+  "regular_price",
+  "sale_price",
+  "images",
+  "stock_status",
   "is_popular",
   "flash",
   "flash_end_time",
@@ -155,6 +173,7 @@ export interface GetProductsOptions {
   order?: "asc" | "desc";
   all?: boolean;
   excludeOutOfStock?: boolean;
+  selectCols?: string;
 }
 
 export async function getProducts(options: GetProductsOptions = {}): Promise<Product[]> {
@@ -176,7 +195,8 @@ export async function getProducts(options: GetProductsOptions = {}): Promise<Pro
     sortBy = "created_at",
     order = "desc",
     all = false,
-    excludeOutOfStock = false
+    excludeOutOfStock = false,
+    selectCols = PRODUCT_LIST_COLUMNS
   } = options;
 
   let allProducts: Product[] = [];
@@ -192,7 +212,7 @@ export async function getProducts(options: GetProductsOptions = {}): Promise<Pro
       const to = from + pageSize - 1;
 
       const endpoint = new URL(`${baseUrl}/rest/v1/${productsTable}`);
-      endpoint.searchParams.set("select", PRODUCT_COLUMNS);
+      endpoint.searchParams.set("select", selectCols);
       endpoint.searchParams.set("status", "eq.publish");
 
       if (isPopular !== undefined) {
